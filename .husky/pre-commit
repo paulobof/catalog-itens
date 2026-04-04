@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Get list of staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Frontend checks
+if echo "$STAGED_FILES" | grep -q "^frontend/"; then
+  if [ -d "frontend/node_modules" ]; then
+    echo "Running frontend checks..."
+    cd frontend
+    npx next lint || { echo "Frontend lint failed"; exit 1; }
+    npx tsc --noEmit || { echo "Frontend type check failed"; exit 1; }
+    cd ..
+    echo "Frontend checks passed"
+  else
+    echo "Skipping frontend checks (run 'cd frontend && npm install' first)"
+  fi
+fi
+
+# Backend checks
+if echo "$STAGED_FILES" | grep -q "^backend/"; then
+  if [ -f "backend/mvnw" ]; then
+    echo "Running backend checks..."
+    cd backend
+    ./mvnw compile -q || { echo "Backend compilation failed"; exit 1; }
+    cd ..
+    echo "Backend checks passed"
+  else
+    echo "Skipping backend checks (no mvnw found)"
+  fi
+fi
+
+echo "Pre-commit checks passed"

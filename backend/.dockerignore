@@ -1,0 +1,44 @@
+# =============================================================================
+# backend/.dockerignore
+# Prevents unnecessary files from being sent to the Docker build context.
+# This dramatically reduces build times and avoids accidental secret leakage.
+# =============================================================================
+
+# Maven build output — rebuilt inside the container
+target/
+
+# IDE project files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Git metadata
+.git/
+.gitignore
+
+# Environment files — secrets must never enter the build context
+.env
+*.env
+
+# Test reports and coverage data
+**/surefire-reports/
+**/failsafe-reports/
+**/jacoco/
+
+# Log files
+*.log
+logs/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+
+# Docker files themselves (not needed inside the image)
+Dockerfile
+.dockerignore

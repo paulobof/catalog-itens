@@ -776,3 +776,9 @@ Mesmo sem autenticação, as seguintes ameaças se aplicam:
 | Console-only logging | Container-idiomatic, Docker log driver como sink |
 | Sem autenticação | App pessoal, rede local. Network isolation como defesa. |
 | ProductTag hard delete | Associação simples e recriável, não precisa de soft delete |
+
+---
+
+## Estratégia de Testes
+
+Documento complementar completo em: `docs/superpowers/specs/2026-04-04-testing-strategy.md`

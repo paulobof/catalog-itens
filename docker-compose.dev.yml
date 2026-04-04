@@ -1,0 +1,103 @@
+# =============================================================================
+# docker-compose.dev.yml — Development override
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# What this adds vs the base file:
+#   - Exposes backend port 8080 to the host for direct API testing
+#   - Exposes db port 5432 to the host for GUI DB clients (DBeaver, TablePlus)
+#   - Exposes MinIO console port 9001 to the host for bucket management
+#   - Bind mounts for hot reload (backend and frontend source code)
+#   - Sets SPRING_PROFILES_ACTIVE=dev to load application-dev.yml
+#   - Enables Compose Watch on frontend for file sync without full rebuild
+#   - Disables restart policies so failed containers stay stopped for inspection
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # frontend — Development overrides
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: runner
+    environment:
+      NODE_ENV: development
+      API_URL: http://backend:8080
+      NEXT_PUBLIC_API_URL: http://localhost:3000/api
+    # Compose Watch — syncs source changes into the running container
+    # without requiring a full image rebuild.
+    develop:
+      watch:
+        # Sync source files directly into the container
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+          ignore:
+            - node_modules/
+        # Sync public static assets
+        - action: sync
+          path: ./frontend/public
+          target: /app/public
+        # Rebuild the image when package.json or package-lock.json change
+        - action: rebuild
+          path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
+        # Rebuild when Next.js config changes
+        - action: rebuild
+          path: ./frontend/next.config.ts
+        # Rebuild when Tailwind config changes (affects CSS output)
+        - action: rebuild
+          path: ./frontend/tailwind.config.ts
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # backend — Development overrides
+  # ---------------------------------------------------------------------------
+  backend:
+    environment:
+      # Load the development Spring profile (application-dev.yml)
+      # This typically enables debug logging, SQL logging, and relaxed CORS
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/catalog_itens?TimeZone=UTC
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-catalog}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET:-catalog-photos}
+      # In dev, increase log verbosity via JVM system properties
+      JAVA_TOOL_OPTIONS: >-
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
+        -XX:+ExitOnOutOfMemoryError
+        -Dlogging.level.org.hibernate.SQL=DEBUG
+        -Dlogging.level.org.hibernate.orm.jdbc.bind=TRACE
+    ports:
+      # Expose backend for direct API calls from host (curl, Postman, IntelliJ HTTP client)
+      - "8080:8080"
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # db — Development overrides
+  # ---------------------------------------------------------------------------
+  db:
+    ports:
+      # Expose PostgreSQL to the host for GUI clients
+      - "5432:5432"
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # minio — Development overrides
+  # ---------------------------------------------------------------------------
+  minio:
+    ports:
+      # S3 API — exposed for direct access from host tools (aws CLI, mc)
+      - "9000:9000"
+      # MinIO web console — management UI
+      - "9001:9001"
+    restart: "no"

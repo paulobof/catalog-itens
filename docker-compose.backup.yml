@@ -1,0 +1,118 @@
+# =============================================================================
+# docker-compose.backup.yml — Backup services
+#
+# Usage (run manually or via cron):
+#   docker compose -f docker-compose.backup.yml --env-file .env up --abort-on-container-exit
+#
+# What this does:
+#   1. pg-backup: runs pg_dump against the running db container, writes a
+#      timestamped compressed SQL dump to ./backups/postgres/
+#   2. minio-backup: runs mc mirror to sync the catalog-photos bucket to a
+#      local ./backups/minio/ directory.
+#
+# Retention: files older than 7 days are deleted automatically.
+#
+# Prerequisites:
+#   - The base stack (docker-compose.yml) must be running.
+#   - The ./backups directory will be created automatically.
+#   - Both services exit with code 0 on success; inspect logs on failure.
+#
+# Cron example (run daily at 2:00 AM):
+#   0 2 * * * cd /opt/catalog-itens && \
+#     docker compose -f docker-compose.backup.yml --env-file .env \
+#     up --abort-on-container-exit >> /var/log/catalog-backup.log 2>&1
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # pg-backup — PostgreSQL dump via pg_dump
+  # Connects to the running db container over the db-net network.
+  # Output: ./backups/postgres/catalog_itens_YYYY-MM-DD_HH-MM-SS.sql.gz
+  # Retention: deletes .sql.gz files older than 7 days.
+  # ---------------------------------------------------------------------------
+  pg-backup:
+    image: postgres:16-alpine
+    container_name: catalog-pg-backup
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB:-catalog_itens}
+      PGUSER: ${POSTGRES_USER:-catalog}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # Mount the host backup directory into the container
+      - ${BACKUP_DIR:-./backups}/postgres:/backups
+    networks:
+      # Must share db-net with the running db service to reach it
+      - db-net
+    command: >
+      /bin/sh -c "
+        set -e &&
+        mkdir -p /backups &&
+        TIMESTAMP=$$(date +%Y-%m-%d_%H-%M-%S) &&
+        FILENAME=catalog_itens_$${TIMESTAMP}.sql.gz &&
+        echo 'Starting pg_dump to /backups/'$${FILENAME}'...' &&
+        pg_dump \
+          --no-password \
+          --format=plain \
+          --no-owner \
+          --no-acl \
+          --encoding=UTF8 \
+          | gzip -9 > /backups/$${FILENAME} &&
+        echo 'Dump completed: '/backups/$${FILENAME} &&
+        echo 'Applying 7-day retention policy...' &&
+        find /backups -name '*.sql.gz' -mtime +7 -delete &&
+        echo 'Retention cleanup done.' &&
+        echo 'pg-backup finished successfully.'
+      "
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # minio-backup — MinIO mirror via mc
+  # Mirrors the catalog-photos bucket to a local directory.
+  # Output: ./backups/minio/catalog-photos/ (full mirror)
+  # Retention: deletes files older than 7 days from the mirror directory.
+  # ---------------------------------------------------------------------------
+  minio-backup:
+    image: minio/mc:RELEASE.2024-11-17T19-35-25Z
+    container_name: catalog-minio-backup
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-catalog-photos}
+    volumes:
+      # Mount the host backup directory into the container
+      - ${BACKUP_DIR:-./backups}/minio:/backups
+    networks:
+      # Must share app-net with the running minio service to reach it
+      - app-net
+    command: >
+      /bin/sh -c "
+        set -e &&
+        mkdir -p /backups &&
+        echo 'Configuring mc alias...' &&
+        mc alias set catalog http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+        echo 'Starting mirror of bucket '$${MINIO_BUCKET}'...' &&
+        mc mirror --overwrite --remove \
+          catalog/$${MINIO_BUCKET} \
+          /backups/$${MINIO_BUCKET} &&
+        echo 'Mirror completed.' &&
+        echo 'Applying 7-day retention policy to local mirror...' &&
+        find /backups/$${MINIO_BUCKET} -type f -mtime +7 -delete &&
+        echo 'Retention cleanup done.' &&
+        echo 'minio-backup finished successfully.'
+      "
+    restart: "no"
+
+# =============================================================================
+# Networks — must reference the same networks as the base compose file
+# so backup containers can reach db and minio
+# =============================================================================
+networks:
+  db-net:
+    external: true
+    name: catalog-itens_db-net
+  app-net:
+    external: true
+    name: catalog-itens_app-net

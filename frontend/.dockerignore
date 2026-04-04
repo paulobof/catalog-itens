@@ -1,0 +1,51 @@
+# =============================================================================
+# frontend/.dockerignore
+# Prevents unnecessary files from being sent to the Docker build context.
+# =============================================================================
+
+# Next.js build output — rebuilt inside the container
+.next/
+
+# Dependencies — reinstalled inside the container via npm ci
+node_modules/
+
+# Environment files — secrets must not enter the build context
+.env
+*.env
+.env.local
+.env.*.local
+
+# Git metadata
+.git/
+.gitignore
+
+# IDE project files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# Log files
+*.log
+logs/
+npm-debug.log*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+docs/
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+
+# TypeScript build info (rebuilt inside container)
+*.tsbuildinfo

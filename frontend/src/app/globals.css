@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-barbie-bg-light: #fce4ec;
+  --color-barbie-bg-soft: #f8bbd0;
+  --color-barbie-accent: #f48fb1;
+  --color-barbie-primary: #ec407a;
+  --color-barbie-dark: #c2185b;
+  --color-barbie-text: #880e4f;
+  --color-barbie-hot-pink: #ff69b4;
+  --color-barbie-surface: #fff5f8;
+
+  --font-poppins: var(--font-poppins-var), sans-serif;
+
+  --radius-2xl: 1rem;
+  --radius-xl: 0.75rem;
+
+  --shadow-card: 0 2px 8px 0 rgba(194, 24, 91, 0.08);
+  --shadow-fab: 0 4px 16px 0 rgba(194, 24, 91, 0.32);
+
+  --background-image-barbie-gradient: linear-gradient(135deg, #ec407a 0%, #c2185b 100%);
+}
+
+:root {
+  --font-poppins-var: 'Poppins', sans-serif;
+}
+
+/* iOS safe area padding for bottom nav */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove default list styles */
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Focus ring consistent */
+*:focus-visible {
+  outline: 2px solid #ec407a;
+  outline-offset: 2px;
+}
