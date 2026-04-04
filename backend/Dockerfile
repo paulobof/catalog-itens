@@ -15,18 +15,16 @@ FROM eclipse-temurin:21-jdk-alpine AS deps
 
 WORKDIR /build
 
-# Copy only the POM first — this layer is rebuilt only when pom.xml changes
-COPY pom.xml ./
+# Copy Maven wrapper and POM first — this layer is rebuilt only when they change
+COPY mvnw pom.xml ./
+COPY .mvn/ .mvn/
+
+# Ensure mvnw has Unix line endings and is executable
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
 # Download all dependencies (including plugins) offline
-# The -B flag enables batch (non-interactive) mode for CI environments
 RUN --mount=type=cache,target=/root/.m2 \
-    ./mvnw --batch-mode dependency:go-offline -q || \
-    (apk add --no-cache wget && \
-     wget -q https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz \
-     && tar xzf apache-maven-3.9.6-bin.tar.gz -C /opt \
-     && ln -s /opt/apache-maven-3.9.6/bin/mvn /usr/local/bin/mvn \
-     && mvn --batch-mode dependency:go-offline -q)
+    ./mvnw --batch-mode dependency:go-offline -q
 
 # -----------------------------------------------------------------------------
 # Stage 2: build
@@ -47,11 +45,9 @@ COPY mvnw pom.xml ./
 # Copy all source code
 COPY src/ src/
 
-# Package the application — skip tests (run them in CI separately)
-RUN --mount=type=cache,target=/root/.m2 \
-    chmod +x mvnw && \
+# Ensure mvnw is executable and has Unix line endings, then package
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && \
     ./mvnw --batch-mode package -DskipTests -q && \
-    # Rename the JAR to a fixed name so the runtime stage is not version-dependent
     mv target/*.jar target/app.jar
 
 # -----------------------------------------------------------------------------
