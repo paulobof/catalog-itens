@@ -31,7 +31,7 @@ services:
     # Port 3000 is the only port exposed to the host in production.
     # In dev the override file adds more ports.
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       NODE_ENV: production
       # Server-side API URL (RSC / Server Actions call backend directly)
