@@ -70,7 +70,7 @@ services:
       # Database connection
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/catalog_itens?TimeZone=UTC}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-catalog}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-catalog_secret_2024}
       # HikariCP
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:-2}
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:-10}
@@ -78,8 +78,8 @@ services:
       SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: ${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:-1800000}
       # MinIO
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-catalog-svc}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-catalog_minio_key}
       MINIO_BUCKET: ${MINIO_BUCKET:-catalog-photos}
       # File upload limits
       SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:-5MB}
@@ -122,7 +122,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-catalog_itens}
       POSTGRES_USER: ${POSTGRES_USER:-catalog}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-catalog_secret_2024}
       PGDATA: /var/lib/postgresql/data/pgdata
     command:
       - postgres
@@ -159,8 +159,8 @@ services:
     expose:
       - "9000"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_secret_2024}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -192,10 +192,10 @@ services:
     image: minio/mc:RELEASE.2024-11-17T19-35-25Z
     container_name: catalog-minio-init
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_secret_2024}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-catalog-svc}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-catalog_minio_key}
       MINIO_BUCKET: ${MINIO_BUCKET:-catalog-photos}
     networks:
       - app-net
@@ -205,7 +205,7 @@ services:
     entrypoint: >
       /bin/sh -c "
         echo 'Configuring mc alias...' &&
-        mc alias set catalog http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} &&
+        mc alias set catalog http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minio_secret_2024} &&
 
         echo 'Creating bucket...' &&
         mc mb --ignore-existing catalog/$${MINIO_BUCKET} &&
@@ -215,9 +215,9 @@ services:
 
         echo 'Creating service account...' &&
         mc admin user svcacct add \
-          --access-key $${MINIO_ACCESS_KEY} \
-          --secret-key $${MINIO_SECRET_KEY} \
-          catalog $${MINIO_ROOT_USER} || true &&
+          --access-key $${MINIO_ACCESS_KEY:-catalog-svc} \
+          --secret-key $${MINIO_SECRET_KEY:-catalog_minio_key} \
+          catalog $${MINIO_ROOT_USER:-minioadmin} || true &&
 
         echo 'minio-init completed successfully.'
       "
