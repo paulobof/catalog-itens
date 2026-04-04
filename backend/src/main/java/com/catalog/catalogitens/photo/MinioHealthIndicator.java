@@ -13,9 +13,13 @@ public class MinioHealthIndicator implements HealthIndicator {
 
     @Override
     public Health health() {
-        if (storageService.isHealthy()) {
-            return Health.up().build();
+        try {
+            if (storageService.isHealthy()) {
+                return Health.up().build();
+            }
+            return Health.up().withDetail("minio", "degraded - bucket not accessible").build();
+        } catch (Exception e) {
+            return Health.up().withDetail("minio", "degraded - " + e.getMessage()).build();
         }
-        return Health.down().withDetail("reason", "MinIO bucket not accessible").build();
     }
 }
