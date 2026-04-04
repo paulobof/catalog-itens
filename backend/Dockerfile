@@ -23,8 +23,8 @@ COPY .mvn/ .mvn/
 RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
 # Download all dependencies (including plugins) offline
-RUN --mount=type=cache,target=/root/.m2 \
-    ./mvnw --batch-mode dependency:go-offline -q
+# No cache mount so .m2 persists in the image layer for the build stage
+RUN ./mvnw --batch-mode dependency:go-offline -q
 
 # -----------------------------------------------------------------------------
 # Stage 2: build
