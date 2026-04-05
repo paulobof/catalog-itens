@@ -30,15 +30,15 @@ services:
     expose:
       - "3000"
     labels:
-      traefik.enable: "true"
-      traefik.http.routers.catalog-http.rule: "Host(`catalogo.paulobof.com.br`)"
-      traefik.http.routers.catalog-http.entrypoints: "web"
-      traefik.http.routers.catalog-https.rule: "Host(`catalogo.paulobof.com.br`)"
-      traefik.http.routers.catalog-https.entrypoints: "websecure"
-      traefik.http.routers.catalog-https.tls: "true"
-      traefik.http.routers.catalog-https.tls.certresolver: "letsencrypt"
-      traefik.http.services.catalog-frontend.loadbalancer.server.port: "3000"
-      traefik.docker.network: "dokploy-network"
+      - "traefik.enable=true"
+      - "traefik.http.routers.catalog-http.rule=Host(`catalogo.paulobof.com.br`)"
+      - "traefik.http.routers.catalog-http.entrypoints=web"
+      - "traefik.http.routers.catalog-https.rule=Host(`catalogo.paulobof.com.br`)"
+      - "traefik.http.routers.catalog-https.entrypoints=websecure"
+      - "traefik.http.routers.catalog-https.tls=true"
+      - "traefik.http.routers.catalog-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.catalog-frontend.loadbalancer.server.port=3000"
+      - "traefik.docker.network=dokploy-network"
     environment:
       NODE_ENV: production
       # Server-side API URL (RSC / Server Actions call backend directly)
