@@ -224,7 +224,7 @@ services:
         mc anonymous set none catalog/$${MINIO_BUCKET} &&
 
         echo 'Creating service account...' &&
-        mc admin user svcacct add --access-key $${MINIO_ACCESS_KEY:-catalog-svc} --secret-key $${MINIO_SECRET_KEY:-catalog_minio_key} catalog $${MINIO_ROOT_USER:-minioadmin} 2>/dev/null;
+        mc admin user svcacct add --access-key $${MINIO_ACCESS_KEY:-catalog-svc} --secret-key $${MINIO_SECRET_KEY:-catalog_minio_key} catalog $${MINIO_ROOT_USER:-minioadmin} 2>&1 || echo 'Service account may already exist, continuing...' &&
 
         echo 'minio-init completed successfully.'
       "
