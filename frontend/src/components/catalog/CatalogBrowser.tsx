@@ -7,6 +7,7 @@ import { Card, CardBody } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { Badge } from '@/components/ui/Badge'
 import { FAB } from '@/components/layout/FAB'
+import { showToast } from '@/components/ui/Toast'
 import type {
   RoomSummary,
   LocationSummary,
@@ -74,13 +75,25 @@ function ChevronIcon() {
   )
 }
 
+function TrashIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   const [view, setView] = useState<View>('rooms')
-  const [rooms] = useState<RoomSummary[]>(initialRooms)
+  const [rooms, setRooms] = useState<RoomSummary[]>(initialRooms)
   const [locations, setLocations] = useState<LocationSummary[]>([])
   const [products, setProducts] = useState<ProductSummary[]>([])
   const [loading, setLoading] = useState(false)
@@ -177,6 +190,32 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     setProducts([])
     setSearchText('')
     setView('rooms')
+  }, [])
+
+  // Delete a room (soft-delete via API)
+  const deleteRoom = useCallback(async (room: RoomSummary) => {
+    if (!window.confirm(`Tem certeza que deseja excluir ${room.name}?`)) return
+    try {
+      const res = await fetch(`/api/rooms/${room.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Falha ao excluir')
+      setRooms((prev) => prev.filter((r) => r.id !== room.id))
+      showToast(`"${room.name}" excluído com sucesso.`, 'success')
+    } catch {
+      showToast('Erro ao excluir o cômodo. Tente novamente.', 'error')
+    }
+  }, [])
+
+  // Delete a location (soft-delete via API)
+  const deleteLocation = useCallback(async (location: LocationSummary) => {
+    if (!window.confirm(`Tem certeza que deseja excluir ${location.name}?`)) return
+    try {
+      const res = await fetch(`/api/locations/${location.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Falha ao excluir')
+      setLocations((prev) => prev.filter((l) => l.id !== location.id))
+      showToast(`"${location.name}" excluído com sucesso.`, 'success')
+    } catch {
+      showToast('Erro ao excluir o local. Tente novamente.', 'error')
+    }
   }, [])
 
   return (
@@ -292,15 +331,27 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
               <li key={room.id}>
                 <button type="button" onClick={() => selectRoom(room)} className="block w-full text-left">
                   <Card interactive className="overflow-hidden">
-                    {room.photos?.[0] ? (
-                      <div className="relative h-32 w-full">
-                        <Image src={room.photos[0].thumbnailUrl} alt={room.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
-                      </div>
-                    ) : (
-                      <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
-                        <RoomIcon />
-                      </div>
-                    )}
+                    <div className="group/card relative">
+                      {room.thumbnailUrl ? (
+                        <div className="relative h-32 w-full">
+                          <Image src={room.thumbnailUrl} alt={room.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
+                          <RoomIcon />
+                        </div>
+                      )}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Excluir ${room.name}`}
+                        onClick={(e) => { e.stopPropagation(); deleteRoom(room) }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteRoom(room) } }}
+                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-red-300 opacity-0 transition-opacity hover:bg-black/60 hover:text-red-200 group-hover/card:opacity-100"
+                      >
+                        <TrashIcon />
+                      </span>
+                    </div>
                     <CardBody>
                       <h3 className="truncate font-bold text-barbie-text text-sm">{room.name}</h3>
                       {room.description && (
@@ -342,15 +393,27 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
               <li key={loc.id}>
                 <button type="button" onClick={() => selectLocation(loc)} className="block w-full text-left">
                   <Card interactive className="overflow-hidden">
-                    {loc.photos?.[0] ? (
-                      <div className="relative h-32 w-full">
-                        <Image src={loc.photos[0].thumbnailUrl} alt={loc.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
-                      </div>
-                    ) : (
-                      <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
-                        <LocationIcon />
-                      </div>
-                    )}
+                    <div className="group/card relative">
+                      {loc.thumbnailUrl ? (
+                        <div className="relative h-32 w-full">
+                          <Image src={loc.thumbnailUrl} alt={loc.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
+                          <LocationIcon />
+                        </div>
+                      )}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Excluir ${loc.name}`}
+                        onClick={(e) => { e.stopPropagation(); deleteLocation(loc) }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteLocation(loc) } }}
+                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-red-300 opacity-0 transition-opacity hover:bg-black/60 hover:text-red-200 group-hover/card:opacity-100"
+                      >
+                        <TrashIcon />
+                      </span>
+                    </div>
                     <CardBody>
                       <h3 className="truncate font-bold text-barbie-text text-sm">{loc.name}</h3>
                       {loc.description && (

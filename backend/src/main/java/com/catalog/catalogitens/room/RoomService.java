@@ -3,6 +3,9 @@ package com.catalog.catalogitens.room;
 import com.catalog.catalogitens.exception.ResourceNotFoundException;
 import com.catalog.catalogitens.location.LocationRepository;
 import com.catalog.catalogitens.location.LocationSummaryResponse;
+import com.catalog.catalogitens.photo.Photo;
+import com.catalog.catalogitens.photo.PhotoRepository;
+import com.catalog.catalogitens.photo.StorageService;
 import com.catalog.catalogitens.product.ProductLocationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,8 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final LocationRepository locationRepository;
     private final ProductLocationRepository productLocationRepository;
+    private final PhotoRepository photoRepository;
+    private final StorageService storageService;
 
     @Transactional(readOnly = true)
     public List<RoomSummaryResponse> findAll() {
@@ -27,7 +32,8 @@ public class RoomService {
                 .map(room -> {
                     long locCount = roomRepository.countActiveLocationsByRoomId(room.getId());
                     long prodCount = roomRepository.countActiveProductsByRoomId(room.getId());
-                    return RoomSummaryResponse.from(room, locCount, prodCount);
+                    String thumbnailUrl = generateFirstThumbnailUrl("room", room.getId());
+                    return RoomSummaryResponse.from(room, locCount, prodCount, thumbnailUrl);
                 })
                 .toList();
     }
@@ -43,7 +49,8 @@ public class RoomService {
         List<LocationSummaryResponse> locationResponses = room.getLocations().stream()
                 .map(loc -> {
                     long pCount = locationRepository.countActiveProductsByLocationId(loc.getId());
-                    return LocationSummaryResponse.from(loc, pCount);
+                    String locThumb = generateFirstThumbnailUrl("location", loc.getId());
+                    return LocationSummaryResponse.from(loc, pCount, locThumb);
                 })
                 .toList();
 
@@ -66,7 +73,7 @@ public class RoomService {
         room.setDescription(request.description());
         room = roomRepository.save(room);
         log.info("Created room: {} ({})", room.getName(), room.getId());
-        return RoomSummaryResponse.from(room, 0, 0);
+        return RoomSummaryResponse.from(room, 0, 0, null);
     }
 
     @Transactional
@@ -79,7 +86,8 @@ public class RoomService {
         log.info("Updated room: {} ({})", room.getName(), room.getId());
         long locCount = roomRepository.countActiveLocationsByRoomId(id);
         long prodCount = roomRepository.countActiveProductsByRoomId(id);
-        return RoomSummaryResponse.from(room, locCount, prodCount);
+        String thumbnailUrl = generateFirstThumbnailUrl("room", id);
+        return RoomSummaryResponse.from(room, locCount, prodCount, thumbnailUrl);
     }
 
     @Transactional
@@ -92,5 +100,22 @@ public class RoomService {
         locationRepository.softDeleteByRoomId(id);
         roomRepository.deleteById(id);  // triggers @SQLDelete
         log.warn("Soft-deleted room: {}", id);
+    }
+
+    private String generateFirstThumbnailUrl(String entityType, UUID entityId) {
+        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(entityType, entityId);
+        if (photos.isEmpty()) {
+            return null;
+        }
+        return generateThumbnailUrl(photos.getFirst().getObjectKey());
+    }
+
+    private String generateThumbnailUrl(String objectKey) {
+        try {
+            String thumbKey = objectKey.replace("photos/", "thumbs/");
+            return storageService.generatePresignedUrl(thumbKey);
+        } catch (Exception e) {
+            return storageService.generatePresignedUrl(objectKey);
+        }
     }
 }

@@ -30,15 +30,13 @@ function RoomIcon() {
 }
 
 export function RoomCard({ room }: RoomCardProps) {
-  const thumbnail = room.photos?.[0]
-
   return (
     <Link href={`/rooms/${room.id}`} className="block focus-visible:rounded-2xl">
       <Card interactive className="overflow-hidden">
-        {thumbnail ? (
+        {room.thumbnailUrl ? (
           <div className="relative h-32 w-full">
             <Image
-              src={thumbnail.thumbnailUrl}
+              src={room.thumbnailUrl}
               alt={`Foto de ${room.name}`}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

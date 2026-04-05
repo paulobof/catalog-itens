@@ -1,6 +1,9 @@
 package com.catalog.catalogitens.location;
 
 import com.catalog.catalogitens.exception.ResourceNotFoundException;
+import com.catalog.catalogitens.photo.Photo;
+import com.catalog.catalogitens.photo.PhotoRepository;
+import com.catalog.catalogitens.photo.StorageService;
 import com.catalog.catalogitens.product.ProductLocationRepository;
 import com.catalog.catalogitens.room.Room;
 import com.catalog.catalogitens.room.RoomRepository;
@@ -20,6 +23,8 @@ public class LocationService {
     private final LocationRepository locationRepository;
     private final RoomRepository roomRepository;
     private final ProductLocationRepository productLocationRepository;
+    private final PhotoRepository photoRepository;
+    private final StorageService storageService;
 
     @Transactional(readOnly = true)
     public List<LocationSummaryResponse> findAll(UUID roomId) {
@@ -30,7 +35,8 @@ public class LocationService {
         return locations.stream()
                 .map(loc -> {
                     long count = locationRepository.countActiveProductsByLocationId(loc.getId());
-                    return LocationSummaryResponse.from(loc, count);
+                    String thumbnailUrl = generateFirstThumbnailUrl("location", loc.getId());
+                    return LocationSummaryResponse.from(loc, count, thumbnailUrl);
                 })
                 .toList();
     }
@@ -74,7 +80,7 @@ public class LocationService {
         location.setDescription(request.description());
         location = locationRepository.save(location);
         log.info("Created location: {} ({}) in room: {}", location.getName(), location.getId(), room.getId());
-        return LocationSummaryResponse.from(location, 0);
+        return LocationSummaryResponse.from(location, 0, null);
     }
 
     @Transactional
@@ -86,7 +92,8 @@ public class LocationService {
         location = locationRepository.save(location);
         log.info("Updated location: {} ({})", location.getName(), location.getId());
         long count = locationRepository.countActiveProductsByLocationId(id);
-        return LocationSummaryResponse.from(location, count);
+        String thumbnailUrl = generateFirstThumbnailUrl("location", id);
+        return LocationSummaryResponse.from(location, count, thumbnailUrl);
     }
 
     @Transactional
@@ -98,5 +105,22 @@ public class LocationService {
         productLocationRepository.softDeleteByLocationId(id);
         locationRepository.deleteById(id);  // triggers @SQLDelete
         log.warn("Soft-deleted location: {}", id);
+    }
+
+    private String generateFirstThumbnailUrl(String entityType, UUID entityId) {
+        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(entityType, entityId);
+        if (photos.isEmpty()) {
+            return null;
+        }
+        return generateThumbnailUrl(photos.getFirst().getObjectKey());
+    }
+
+    private String generateThumbnailUrl(String objectKey) {
+        try {
+            String thumbKey = objectKey.replace("photos/", "thumbs/");
+            return storageService.generatePresignedUrl(thumbKey);
+        } catch (Exception e) {
+            return storageService.generatePresignedUrl(objectKey);
+        }
     }
 }

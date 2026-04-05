@@ -35,18 +35,16 @@ function LocationIcon() {
 }
 
 export function LocationCard({ location }: LocationCardProps) {
-  const thumbnail = location.photos?.[0]
-
   return (
     <Link
       href={`/locations/${location.id}`}
       className="block focus-visible:rounded-2xl"
     >
       <Card interactive className="overflow-hidden">
-        {thumbnail ? (
+        {location.thumbnailUrl ? (
           <div className="relative h-32 w-full">
             <Image
-              src={thumbnail.thumbnailUrl}
+              src={location.thumbnailUrl}
               alt={`Foto de ${location.name}`}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

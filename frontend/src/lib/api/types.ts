@@ -30,13 +30,14 @@ export interface RoomSummary {
   description: string | null
   locationCount: number
   productCount: number
-  photos: PhotoResponse[]
+  thumbnailUrl: string | null
   createdAt: string
   updatedAt: string
 }
 
 export interface RoomDetail extends RoomSummary {
   locations: LocationSummary[]
+  photos: PhotoResponse[]
 }
 
 export interface CreateRoomRequest {
@@ -60,13 +61,14 @@ export interface LocationSummary {
   name: string
   description: string | null
   productCount: number
-  photos: PhotoResponse[]
+  thumbnailUrl: string | null
   createdAt: string
   updatedAt: string
 }
 
 export interface LocationDetail extends LocationSummary {
   products: ProductInLocationResponse[]
+  photos: PhotoResponse[]
 }
 
 export interface ProductInLocationResponse {
