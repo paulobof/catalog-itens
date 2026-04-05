@@ -347,7 +347,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                         aria-label={`Excluir ${room.name}`}
                         onClick={(e) => { e.stopPropagation(); deleteRoom(room) }}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteRoom(room) } }}
-                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-red-300 opacity-0 transition-opacity hover:bg-black/60 hover:text-red-200 group-hover/card:opacity-100"
+                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
                       >
                         <TrashIcon />
                       </span>
@@ -409,7 +409,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                         aria-label={`Excluir ${loc.name}`}
                         onClick={(e) => { e.stopPropagation(); deleteLocation(loc) }}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteLocation(loc) } }}
-                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-red-300 opacity-0 transition-opacity hover:bg-black/60 hover:text-red-200 group-hover/card:opacity-100"
+                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
                       >
                         <TrashIcon />
                       </span>
