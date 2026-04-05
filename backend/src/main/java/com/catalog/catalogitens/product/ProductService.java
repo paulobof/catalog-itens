@@ -9,6 +9,7 @@ import com.catalog.catalogitens.photo.PhotoRepository;
 import com.catalog.catalogitens.photo.StorageService;
 import com.catalog.catalogitens.tag.Tag;
 import com.catalog.catalogitens.tag.TagRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ public class ProductService {
     private final TagRepository tagRepository;
     private final PhotoRepository photoRepository;
     private final StorageService storageService;
+    private final EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public PageResponse<ProductSummaryResponse> search(String q, UUID roomId, UUID tagId,
@@ -148,6 +150,8 @@ public class ProductService {
         }
 
         log.info("Created product: {} ({})", product.getName(), product.getId());
+        entityManager.flush();
+        entityManager.clear();
         return findById(product.getId());
     }
 

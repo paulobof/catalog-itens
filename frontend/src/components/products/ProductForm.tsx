@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { createProduct, updateProduct } from '@/lib/api/products'
@@ -52,7 +51,6 @@ export function ProductForm({
   allLocations,
   defaultLocationId,
 }: ProductFormProps) {
-  const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const isEditing = !!product
 
@@ -213,7 +211,8 @@ export function ProductForm({
           : 'Produto criado com sucesso!',
         'success',
       )
-      router.push(`/products/${productId}`)
+      // Hard navigation to avoid intercepting route issues
+      window.location.href = `/products/${productId}`
     } catch {
       showToast('Erro ao salvar produto. Tente novamente.', 'error')
     } finally {
