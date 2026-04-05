@@ -29,13 +29,6 @@ services:
     image: catalog-itens/frontend:latest
     expose:
       - "3000"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.catalog-frontend.rule=Host(`catalogo.paulobof.com.br`)"
-      - "traefik.http.routers.catalog-frontend.entrypoints=web,websecure"
-      - "traefik.http.routers.catalog-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.catalog-frontend.loadbalancer.server.port=3000"
-      - "traefik.docker.network=dokploy-network"
     environment:
       NODE_ENV: production
       # Server-side API URL (RSC / Server Actions call backend directly)
