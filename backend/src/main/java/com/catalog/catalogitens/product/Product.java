@@ -6,8 +6,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -44,10 +44,10 @@ public class Product {
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     @SQLRestriction("deleted_at IS NULL")
-    private List<ProductLocation> productLocations = new ArrayList<>();
+    private Set<ProductLocation> productLocations = new HashSet<>();
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-    private List<ProductTag> productTags = new ArrayList<>();
+    private Set<ProductTag> productTags = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {
