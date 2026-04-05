@@ -27,7 +27,6 @@ services:
       args:
         NEXT_TELEMETRY_DISABLED: "1"
     image: catalog-itens/frontend:latest
-    container_name: catalog-frontend
     expose:
       - "3000"
     labels:
