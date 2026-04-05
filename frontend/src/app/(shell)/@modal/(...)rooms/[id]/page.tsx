@@ -115,7 +115,7 @@ export default function RoomModalPage({ params }: RoomModalPageProps) {
                 </p>
               </div>
             ) : (
-              <ul className="flex flex-col gap-3">
+              <ul className="grid grid-cols-2 gap-3">
                 {room.locations.map((location: LocationSummary) => (
                   <li key={location.id}>
                     <LocationCard location={location} />

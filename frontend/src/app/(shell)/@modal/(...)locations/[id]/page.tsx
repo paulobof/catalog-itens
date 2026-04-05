@@ -7,7 +7,6 @@ import Image from 'next/image'
 import { Sheet } from '@/components/ui/Sheet'
 import { Spinner } from '@/components/ui/Spinner'
 import { Card, CardBody } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import type { LocationDetail, ProductInLocationResponse } from '@/lib/api/types'
 
 interface LocationModalPageProps {
@@ -132,18 +131,21 @@ export default function LocationModalPage({ params }: LocationModalPageProps) {
                 </p>
               </div>
             ) : (
-              <ul className="flex flex-col gap-3">
+              <ul className="grid grid-cols-2 gap-3">
                 {location.products.map((product: ProductInLocationResponse) => (
                   <li key={product.productId}>
                     <Link href={`/products/${product.productId}`} className="block">
-                      <Card interactive>
-                        <CardBody>
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-barbie-text">
-                              {product.productName}
-                            </span>
-                            <Badge variant="dark">x{product.quantity}</Badge>
-                          </div>
+                      <Card interactive className="overflow-hidden">
+                        <div className="flex h-28 items-center justify-center bg-barbie-bg-soft relative">
+                          <span className="text-3xl" aria-hidden="true">📦</span>
+                          <span className="absolute right-2 top-2 rounded-lg bg-barbie-dark px-2 py-0.5 text-xs font-bold text-white shadow">
+                            x{product.quantity}
+                          </span>
+                        </div>
+                        <CardBody className="pt-3">
+                          <h4 className="truncate font-bold text-barbie-text text-sm leading-tight">
+                            {product.productName}
+                          </h4>
                         </CardBody>
                       </Card>
                     </Link>
