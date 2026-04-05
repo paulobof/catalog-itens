@@ -41,7 +41,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
     throw err
   }
 
-  const coverPhoto = location.photos[0]
+  const coverPhoto = location.photos?.[0]
 
   return (
     <div>

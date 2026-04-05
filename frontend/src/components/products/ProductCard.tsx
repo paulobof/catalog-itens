@@ -12,7 +12,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, quantityBadge }: ProductCardProps) {
-  const thumbnail = product.photos[0]
+  const thumbnail = product.photos?.[0]
   const primaryTag = product.tags[0]
 
   return (

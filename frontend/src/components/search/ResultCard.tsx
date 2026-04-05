@@ -30,7 +30,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
 }
 
 export function ResultCard({ product, query }: ResultCardProps) {
-  const thumbnail = product.photos[0]
+  const thumbnail = product.photos?.[0]
 
   return (
     <Link

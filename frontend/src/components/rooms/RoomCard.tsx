@@ -30,7 +30,7 @@ function RoomIcon() {
 }
 
 export function RoomCard({ room }: RoomCardProps) {
-  const thumbnail = room.photos[0]
+  const thumbnail = room.photos?.[0]
 
   return (
     <Link href={`/rooms/${room.id}`} className="block focus-visible:rounded-2xl">

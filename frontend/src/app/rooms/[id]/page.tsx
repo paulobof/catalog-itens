@@ -39,7 +39,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
     throw err
   }
 
-  const coverPhoto = room.photos[0]
+  const coverPhoto = room.photos?.[0]
 
   return (
     <div>

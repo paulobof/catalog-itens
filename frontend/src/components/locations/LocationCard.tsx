@@ -35,7 +35,7 @@ function LocationIcon() {
 }
 
 export function LocationCard({ location }: LocationCardProps) {
-  const thumbnail = location.photos[0]
+  const thumbnail = location.photos?.[0]
 
   return (
     <Link
