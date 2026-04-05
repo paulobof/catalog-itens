@@ -28,7 +28,7 @@ services:
         NEXT_TELEMETRY_DISABLED: "1"
     image: catalog-itens/frontend:latest
     ports:
-      - "3000:3000"
+      - "4000:3000"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.catalog-http.rule=Host(`catalogo.paulobof.com.br`)"
