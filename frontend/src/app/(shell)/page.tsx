@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import { getRooms } from '@/lib/api/rooms'
 import { Spinner } from '@/components/ui/Spinner'
-import { FAB } from '@/components/layout/FAB'
 import { HomeSearchBar } from '@/components/search/HomeSearchBar'
 import { CatalogBrowser } from '@/components/catalog/CatalogBrowser'
 import type { Metadata } from 'next'
@@ -39,7 +38,6 @@ export default async function HomePage() {
         </Suspense>
       </div>
 
-      <FAB href="/rooms/new" label="Adicionar cômodo" />
     </div>
   )
 }

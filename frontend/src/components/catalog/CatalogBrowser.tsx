@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Card, CardBody } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { Badge } from '@/components/ui/Badge'
+import { FAB } from '@/components/layout/FAB'
 import type {
   RoomSummary,
   LocationSummary,
@@ -428,6 +429,24 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
           </ul>
         )
       )}
+
+      {/* Context-aware FAB */}
+      <FAB
+        href={
+          view === 'rooms'
+            ? '/rooms/new'
+            : view === 'locations'
+              ? `/locations/new?roomId=${roomFilter?.id}`
+              : `/products/new?locationId=${locationFilter?.id}`
+        }
+        label={
+          view === 'rooms'
+            ? 'Adicionar cômodo'
+            : view === 'locations'
+              ? 'Adicionar local'
+              : 'Adicionar produto'
+        }
+      />
     </div>
   )
 }
