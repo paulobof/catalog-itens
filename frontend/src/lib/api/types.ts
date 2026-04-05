@@ -70,12 +70,9 @@ export interface LocationDetail extends LocationSummary {
 }
 
 export interface ProductInLocationResponse {
-  id: string
-  name: string
-  description: string | null
+  productId: string
+  productName: string
   quantity: number
-  photos: PhotoResponse[]
-  tags: TagResponse[]
 }
 
 export interface CreateLocationRequest {

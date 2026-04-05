@@ -5,10 +5,9 @@ import { getLocationById } from '@/lib/api/locations'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FAB } from '@/components/layout/FAB'
-import { ProductCard } from '@/components/products/ProductCard'
+import { Card, CardBody } from '@/components/ui/Card'
 import { ApiError } from '@/lib/api/client'
 import type { Metadata } from 'next'
-import type { ProductSummary } from '@/lib/api/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -103,28 +102,23 @@ export default async function LocationPage({ params }: LocationPageProps) {
             </p>
           </div>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {location.products.map((product) => {
-              const summary: ProductSummary = {
-                id: product.id,
-                name: product.name,
-                description: product.description,
-                photos: product.photos,
-                tags: product.tags,
-                locationCount: 1,
-                totalQuantity: product.quantity,
-                createdAt: '',
-                updatedAt: '',
-              }
-              return (
-                <li key={product.id}>
-                  <ProductCard
-                    product={summary}
-                    quantityBadge={product.quantity}
-                  />
-                </li>
-              )
-            })}
+          <ul className="flex flex-col gap-3">
+            {location.products.map((product) => (
+              <li key={product.productId}>
+                <Link href={`/products/${product.productId}`} className="block">
+                  <Card interactive>
+                    <CardBody>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-barbie-text">{product.productName}</span>
+                        <span className="rounded-full bg-barbie-primary px-2 py-0.5 text-xs font-semibold text-white">
+                          x{product.quantity}
+                        </span>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </div>
