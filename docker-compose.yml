@@ -28,10 +28,15 @@ services:
         NEXT_TELEMETRY_DISABLED: "1"
     image: catalog-itens/frontend:latest
     container_name: catalog-frontend
-    # Port 3000 is the only port exposed to the host in production.
-    # In dev the override file adds more ports.
-    ports:
+    expose:
       - "3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.catalog-frontend.rule=Host(`catalogo.paulobof.com.br`)"
+      - "traefik.http.routers.catalog-frontend.entrypoints=web,websecure"
+      - "traefik.http.routers.catalog-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.catalog-frontend.loadbalancer.server.port=3000"
+      - "traefik.docker.network=dokploy-network"
     environment:
       NODE_ENV: production
       # Server-side API URL (RSC / Server Actions call backend directly)
