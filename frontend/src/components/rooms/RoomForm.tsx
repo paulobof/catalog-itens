@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { createRoom, updateRoom } from '@/lib/api/rooms'
@@ -20,7 +19,6 @@ interface RoomFormProps {
 }
 
 export function RoomForm({ room }: RoomFormProps) {
-  const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const isEditing = !!room
 
@@ -45,11 +43,11 @@ export function RoomForm({ room }: RoomFormProps) {
       if (isEditing) {
         await updateRoom(room.id, payload)
         showToast('Cômodo atualizado com sucesso!', 'success')
-        router.push(`/rooms/${room.id}`)
+        window.location.href = `/rooms/${room.id}`
       } else {
         const created = await createRoom(payload)
         showToast('Cômodo criado com sucesso!', 'success')
-        router.push(`/rooms/${created.id}`)
+        window.location.href = `/rooms/${created.id}`
       }
     } catch {
       showToast('Erro ao salvar cômodo. Tente novamente.', 'error')

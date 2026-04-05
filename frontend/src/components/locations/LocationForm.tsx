@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { createLocation, updateLocation } from '@/lib/api/locations'
@@ -27,7 +26,6 @@ export function LocationForm({
   rooms,
   defaultRoomId,
 }: LocationFormProps) {
-  const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const isEditing = !!location
 
@@ -52,7 +50,7 @@ export function LocationForm({
           description: data.description.trim() || null,
         })
         showToast('Local atualizado com sucesso!', 'success')
-        router.push(`/locations/${location.id}`)
+        window.location.href = `/locations/${location.id}`
       } else {
         const created = await createLocation({
           roomId: data.roomId,
@@ -60,7 +58,7 @@ export function LocationForm({
           description: data.description.trim() || null,
         })
         showToast('Local criado com sucesso!', 'success')
-        router.push(`/locations/${created.id}`)
+        window.location.href = `/locations/${created.id}`
       }
     } catch {
       showToast('Erro ao salvar local. Tente novamente.', 'error')
