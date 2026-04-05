@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardBody } from '@/components/ui/Card'
@@ -56,6 +56,15 @@ function CloseIcon() {
   )
 }
 
+function SearchIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-barbie-text/40">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  )
+}
+
 function ChevronIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-barbie-accent">
@@ -75,13 +84,44 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   const [products, setProducts] = useState<ProductSummary[]>([])
   const [loading, setLoading] = useState(false)
 
+  // Search / text filter
+  const [searchText, setSearchText] = useState('')
+
   // Active filters
   const [roomFilter, setRoomFilter] = useState<FilterChip | null>(null)
   const [locationFilter, setLocationFilter] = useState<FilterChip | null>(null)
 
+  // Filtered lists based on search text
+  const normalizedSearch = searchText.toLowerCase().trim()
+
+  const filteredRooms = useMemo(
+    () =>
+      normalizedSearch
+        ? rooms.filter((r) => r.name.toLowerCase().includes(normalizedSearch))
+        : rooms,
+    [rooms, normalizedSearch],
+  )
+
+  const filteredLocations = useMemo(
+    () =>
+      normalizedSearch
+        ? locations.filter((l) => l.name.toLowerCase().includes(normalizedSearch))
+        : locations,
+    [locations, normalizedSearch],
+  )
+
+  const filteredProducts = useMemo(
+    () =>
+      normalizedSearch
+        ? products.filter((p) => p.name.toLowerCase().includes(normalizedSearch))
+        : products,
+    [products, normalizedSearch],
+  )
+
   // Drill into a room → show its locations
   const selectRoom = useCallback(async (room: RoomSummary) => {
     setLoading(true)
+    setSearchText('')
     try {
       const res = await fetch(`/api/locations?roomId=${room.id}`)
       const data: LocationSummary[] = await res.json()
@@ -97,6 +137,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   // Drill into a location → show its products
   const selectLocation = useCallback(async (location: LocationSummary) => {
     setLoading(true)
+    setSearchText('')
     try {
       const res = await fetch(`/api/locations/${location.id}`)
       const detail = await res.json()
@@ -123,6 +164,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   const clearLocationFilter = useCallback(() => {
     setLocationFilter(null)
     setProducts([])
+    setSearchText('')
     setView('locations')
   }, [])
 
@@ -132,6 +174,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     setLocationFilter(null)
     setLocations([])
     setProducts([])
+    setSearchText('')
     setView('rooms')
   }, [])
 
@@ -197,6 +240,36 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         )}
       </div>
 
+      {/* Search / filter bar */}
+      <div className="relative">
+        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+          <SearchIcon />
+        </span>
+        <input
+          type="text"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder={
+            view === 'rooms'
+              ? 'Filtrar comodos...'
+              : view === 'locations'
+                ? 'Filtrar locais...'
+                : 'Filtrar produtos...'
+          }
+          className="w-full rounded-xl border border-barbie-accent/20 bg-white py-2 pl-9 pr-9 text-sm text-barbie-text placeholder:text-barbie-text/40 focus:border-barbie-primary focus:outline-none focus:ring-1 focus:ring-barbie-primary"
+        />
+        {searchText && (
+          <button
+            type="button"
+            onClick={() => setSearchText('')}
+            className="absolute inset-y-0 right-3 flex items-center text-barbie-text/40 hover:text-barbie-text/70"
+            aria-label="Limpar busca"
+          >
+            <CloseIcon />
+          </button>
+        )}
+      </div>
+
       {/* Loading state */}
       {loading && (
         <div className="flex justify-center py-16">
@@ -206,11 +279,15 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
 
       {/* Rooms grid */}
       {!loading && view === 'rooms' && (
-        rooms.length === 0 ? (
-          <EmptyState emoji="🏠" message="Nenhum cômodo cadastrado ainda." href="/rooms/new" cta="Criar primeiro cômodo" />
+        filteredRooms.length === 0 ? (
+          normalizedSearch ? (
+            <EmptyState emoji="🔍" message={`Nenhum cômodo encontrado para "${searchText}".`} href="/rooms/new" cta="Criar primeiro cômodo" />
+          ) : (
+            <EmptyState emoji="🏠" message="Nenhum cômodo cadastrado ainda." href="/rooms/new" cta="Criar primeiro cômodo" />
+          )
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {rooms.map((room) => (
+            {filteredRooms.map((room) => (
               <li key={room.id}>
                 <button type="button" onClick={() => selectRoom(room)} className="block w-full text-left">
                   <Card interactive className="overflow-hidden">
@@ -242,16 +319,25 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
 
       {/* Locations grid */}
       {!loading && view === 'locations' && (
-        locations.length === 0 ? (
-          <EmptyState
-            emoji="📍"
-            message={`Nenhum local em "${roomFilter?.label}" ainda.`}
-            href={`/locations/new?roomId=${roomFilter?.id}`}
-            cta="Criar primeiro local"
-          />
+        filteredLocations.length === 0 ? (
+          normalizedSearch ? (
+            <EmptyState
+              emoji="🔍"
+              message={`Nenhum local encontrado para "${searchText}".`}
+              href={`/locations/new?roomId=${roomFilter?.id}`}
+              cta="Criar primeiro local"
+            />
+          ) : (
+            <EmptyState
+              emoji="📍"
+              message={`Nenhum local em "${roomFilter?.label}" ainda.`}
+              href={`/locations/new?roomId=${roomFilter?.id}`}
+              cta="Criar primeiro local"
+            />
+          )
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {locations.map((loc) => (
+            {filteredLocations.map((loc) => (
               <li key={loc.id}>
                 <button type="button" onClick={() => selectLocation(loc)} className="block w-full text-left">
                   <Card interactive className="overflow-hidden">
@@ -283,16 +369,25 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
 
       {/* Products grid */}
       {!loading && view === 'products' && (
-        products.length === 0 ? (
-          <EmptyState
-            emoji="📦"
-            message={`Nenhum produto em "${locationFilter?.label}" ainda.`}
-            href={`/products/new?locationId=${locationFilter?.id}`}
-            cta="Criar primeiro produto"
-          />
+        filteredProducts.length === 0 ? (
+          normalizedSearch ? (
+            <EmptyState
+              emoji="🔍"
+              message={`Nenhum produto encontrado para "${searchText}".`}
+              href={`/products/new?locationId=${locationFilter?.id}`}
+              cta="Criar primeiro produto"
+            />
+          ) : (
+            <EmptyState
+              emoji="📦"
+              message={`Nenhum produto em "${locationFilter?.label}" ainda.`}
+              href={`/products/new?locationId=${locationFilter?.id}`}
+              cta="Criar primeiro produto"
+            />
+          )
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <li key={product.id}>
                 <Link href={`/products/${product.id}`} className="block">
                   <Card interactive className="overflow-hidden">
