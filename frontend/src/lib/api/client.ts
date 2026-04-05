@@ -30,8 +30,8 @@ function getBaseUrl(): string {
     // Server-side: use internal Docker network URL
     return process.env.API_URL ?? 'http://localhost:8080'
   }
-  // Client-side: use public URL (proxied through Next.js)
-  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api'
+  // Client-side: use relative URL (proxied through Next.js route handler)
+  return ''
 }
 
 function generateRequestId(): string {

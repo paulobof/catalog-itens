@@ -6,7 +6,7 @@ async function proxyRequest(
   request: NextRequest,
   path: string,
 ): Promise<NextResponse> {
-  const targetUrl = `${BACKEND_URL}/${path}${
+  const targetUrl = `${BACKEND_URL}/api/${path}${
     request.nextUrl.search ? request.nextUrl.search : ''
   }`
 
