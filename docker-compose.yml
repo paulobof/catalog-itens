@@ -40,6 +40,7 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:3000/api
     networks:
       - frontend-net
+      - dokploy-network
       - app-net
     depends_on:
       backend:
@@ -246,3 +247,7 @@ networks:
   db-net:
     driver: bridge
     internal: true
+
+  # Dokploy's Traefik proxy network — required for domain routing
+  dokploy-network:
+    external: true
