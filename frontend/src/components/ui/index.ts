@@ -1,4 +1,5 @@
 export { Button } from './Button'
+export { Sheet } from './Sheet'
 export { Card, CardBody } from './Card'
 export { Badge } from './Badge'
 export { Input } from './Input'

@@ -4,8 +4,10 @@ import { ToastContainer } from '@/components/ui/Toast'
 
 export default async function ShellLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode
+  modal: React.ReactNode
 }) {
   const headersList = await headers()
   const pathname = headersList.get('x-pathname') ?? '/'
@@ -15,6 +17,7 @@ export default async function ShellLayout({
       <main className="pb-20">{children}</main>
       <BottomNav activePath={pathname} />
       <ToastContainer />
+      {modal}
     </div>
   )
 }
