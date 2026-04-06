@@ -49,7 +49,7 @@ export default async function EditLocationPage({
         backLabel={`Voltar para ${location.name}`}
       />
       <div className="px-4 py-6">
-        <LocationForm location={location} rooms={rooms} />
+        <LocationForm location={location} rooms={rooms} existingPhotos={location.photos} />
       </div>
     </div>
   )

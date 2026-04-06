@@ -1,6 +1,7 @@
 package com.catalog.catalogitens.room;
 
 import com.catalog.catalogitens.location.LocationSummaryResponse;
+import com.catalog.catalogitens.photo.PhotoResponse;
 
 import java.time.Instant;
 import java.util.List;
@@ -11,6 +12,7 @@ public record RoomDetailResponse(
         String name,
         String description,
         List<LocationSummaryResponse> locations,
+        List<PhotoResponse> photos,
         long locationCount,
         long productCount,
         Instant createdAt,

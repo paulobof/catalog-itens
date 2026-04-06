@@ -87,6 +87,15 @@ function TrashIcon() {
   )
 }
 
+function EditIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -202,6 +211,19 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
       showToast(`"${room.name}" excluído com sucesso.`, 'success')
     } catch {
       showToast('Erro ao excluir o cômodo. Tente novamente.', 'error')
+    }
+  }, [])
+
+  // Delete a product (soft-delete via API)
+  const deleteProduct = useCallback(async (product: ProductSummary) => {
+    if (!window.confirm(`Tem certeza que deseja excluir ${product.name}?`)) return
+    try {
+      const res = await fetch(`/api/products/${product.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Falha ao excluir')
+      setProducts((prev) => prev.filter((p) => p.id !== product.id))
+      showToast(`"${product.name}" excluído com sucesso.`, 'success')
+    } catch {
+      showToast('Erro ao excluir o produto. Tente novamente.', 'error')
     }
   }, [])
 
@@ -341,16 +363,26 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                           <RoomIcon />
                         </div>
                       )}
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Excluir ${room.name}`}
-                        onClick={(e) => { e.stopPropagation(); deleteRoom(room) }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteRoom(room) } }}
-                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
-                      >
-                        <TrashIcon />
-                      </span>
+                      <div className="absolute right-1.5 top-1.5 flex gap-1">
+                        <Link
+                          href={`/rooms/${room.id}/edit`}
+                          aria-label={`Editar ${room.name}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-barbie-primary hover:text-white transition-colors"
+                        >
+                          <EditIcon />
+                        </Link>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Excluir ${room.name}`}
+                          onClick={(e) => { e.stopPropagation(); deleteRoom(room) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteRoom(room) } }}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
+                        >
+                          <TrashIcon />
+                        </span>
+                      </div>
                     </div>
                     <CardBody>
                       <h3 className="truncate font-bold text-barbie-text text-sm">{room.name}</h3>
@@ -403,16 +435,26 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                           <LocationIcon />
                         </div>
                       )}
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Excluir ${loc.name}`}
-                        onClick={(e) => { e.stopPropagation(); deleteLocation(loc) }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteLocation(loc) } }}
-                        className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
-                      >
-                        <TrashIcon />
-                      </span>
+                      <div className="absolute right-1.5 top-1.5 flex gap-1">
+                        <Link
+                          href={`/locations/${loc.id}/edit`}
+                          aria-label={`Editar ${loc.name}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-barbie-primary hover:text-white transition-colors"
+                        >
+                          <EditIcon />
+                        </Link>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Excluir ${loc.name}`}
+                          onClick={(e) => { e.stopPropagation(); deleteLocation(loc) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteLocation(loc) } }}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
+                        >
+                          <TrashIcon />
+                        </span>
+                      </div>
                     </div>
                     <CardBody>
                       <h3 className="truncate font-bold text-barbie-text text-sm">{loc.name}</h3>
@@ -455,15 +497,37 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
               <li key={product.id}>
                 <Link href={`/products/${product.id}`} className="block">
                   <Card interactive className="overflow-hidden">
-                    {product.photos?.[0] ? (
-                      <div className="relative h-32 w-full">
-                        <Image src={product.photos[0].thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                    <div className="relative">
+                      {product.photos?.[0] ? (
+                        <div className="relative h-32 w-full">
+                          <Image src={product.photos[0].thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
+                          <span className="text-3xl" aria-hidden="true">📦</span>
+                        </div>
+                      )}
+                      <div className="absolute right-1.5 top-1.5 flex gap-1">
+                        <Link
+                          href={`/products/${product.id}/edit`}
+                          aria-label={`Editar ${product.name}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-barbie-primary hover:text-white transition-colors"
+                        >
+                          <EditIcon />
+                        </Link>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Excluir ${product.name}`}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteProduct(product) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); deleteProduct(product) } }}
+                          className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
+                        >
+                          <TrashIcon />
+                        </span>
                       </div>
-                    ) : (
-                      <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
-                        <span className="text-3xl" aria-hidden="true">📦</span>
-                      </div>
-                    )}
+                    </div>
                     <CardBody className="pt-3">
                       <h3 className="truncate font-bold text-barbie-text text-sm">{product.name}</h3>
                       {product.description && (

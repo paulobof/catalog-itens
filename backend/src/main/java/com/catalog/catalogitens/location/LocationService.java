@@ -3,6 +3,8 @@ package com.catalog.catalogitens.location;
 import com.catalog.catalogitens.exception.ResourceNotFoundException;
 import com.catalog.catalogitens.photo.Photo;
 import com.catalog.catalogitens.photo.PhotoRepository;
+import com.catalog.catalogitens.photo.PhotoResponse;
+import com.catalog.catalogitens.photo.PhotoService;
 import com.catalog.catalogitens.photo.StorageService;
 import com.catalog.catalogitens.product.ProductLocationRepository;
 import com.catalog.catalogitens.room.Room;
@@ -24,6 +26,7 @@ public class LocationService {
     private final RoomRepository roomRepository;
     private final ProductLocationRepository productLocationRepository;
     private final PhotoRepository photoRepository;
+    private final PhotoService photoService;
     private final StorageService storageService;
 
     @Transactional(readOnly = true)
@@ -56,6 +59,8 @@ public class LocationService {
                 ))
                 .toList();
 
+        List<PhotoResponse> photos = photoService.findByEntity("location", id);
+
         return new LocationDetailResponse(
                 location.getId(),
                 location.getRoom().getId(),
@@ -63,6 +68,7 @@ public class LocationService {
                 location.getName(),
                 location.getDescription(),
                 products,
+                photos,
                 productCount,
                 location.getCreatedAt(),
                 location.getUpdatedAt()

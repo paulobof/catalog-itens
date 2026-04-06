@@ -18,6 +18,7 @@ export interface PhotoSlot {
 interface PhotoUploadZoneProps {
   slots: PhotoSlot[]
   onChange: (slots: PhotoSlot[]) => void
+  onDeleteExisting?: (photoId: string) => void
   error?: string
 }
 
@@ -39,7 +40,7 @@ function EmptySlotIcon() {
   )
 }
 
-export function PhotoUploadZone({ slots, onChange, error }: PhotoUploadZoneProps) {
+export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: PhotoUploadZoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null)
@@ -121,6 +122,10 @@ export function PhotoUploadZone({ slots, onChange, error }: PhotoUploadZoneProps
   }
 
   function removeSlot(index: number) {
+    const slot = slots[index]
+    if (slot?.existingId && onDeleteExisting) {
+      onDeleteExisting(slot.existingId)
+    }
     const newSlots = [...slots]
     newSlots[index] = {
       file: null,

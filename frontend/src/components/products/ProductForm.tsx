@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { createProduct, updateProduct } from '@/lib/api/products'
 import { createTag } from '@/lib/api/tags'
-import { uploadPhoto } from '@/lib/api/photos'
+import { uploadPhoto, deletePhoto } from '@/lib/api/photos'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
@@ -259,7 +259,7 @@ export function ProductForm({
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Fotos
         </legend>
-        <PhotoUploadZone slots={photoSlots} onChange={setPhotoSlots} />
+        <PhotoUploadZone slots={photoSlots} onChange={setPhotoSlots} onDeleteExisting={(id) => deletePhoto(id).catch(() => {})} />
       </fieldset>
 
       {/* Tags */}

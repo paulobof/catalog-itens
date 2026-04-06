@@ -1,5 +1,7 @@
 package com.catalog.catalogitens.location;
 
+import com.catalog.catalogitens.photo.PhotoResponse;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +13,7 @@ public record LocationDetailResponse(
         String name,
         String description,
         List<LocationProductEntry> products,
+        List<PhotoResponse> photos,
         long productCount,
         Instant createdAt,
         Instant updatedAt

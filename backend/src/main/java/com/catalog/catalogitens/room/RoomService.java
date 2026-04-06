@@ -5,6 +5,8 @@ import com.catalog.catalogitens.location.LocationRepository;
 import com.catalog.catalogitens.location.LocationSummaryResponse;
 import com.catalog.catalogitens.photo.Photo;
 import com.catalog.catalogitens.photo.PhotoRepository;
+import com.catalog.catalogitens.photo.PhotoResponse;
+import com.catalog.catalogitens.photo.PhotoService;
 import com.catalog.catalogitens.photo.StorageService;
 import com.catalog.catalogitens.product.ProductLocationRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class RoomService {
     private final LocationRepository locationRepository;
     private final ProductLocationRepository productLocationRepository;
     private final PhotoRepository photoRepository;
+    private final PhotoService photoService;
     private final StorageService storageService;
 
     @Transactional(readOnly = true)
@@ -54,11 +57,14 @@ public class RoomService {
                 })
                 .toList();
 
+        List<PhotoResponse> photos = photoService.findByEntity("room", id);
+
         return new RoomDetailResponse(
                 room.getId(),
                 room.getName(),
                 room.getDescription(),
                 locationResponses,
+                photos,
                 locCount,
                 prodCount,
                 room.getCreatedAt(),

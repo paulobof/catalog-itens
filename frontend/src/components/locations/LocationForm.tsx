@@ -3,11 +3,13 @@
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { createLocation, updateLocation } from '@/lib/api/locations'
+import { uploadPhoto, deletePhoto } from '@/lib/api/photos'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { showToast } from '@/components/ui/Toast'
-import type { LocationSummary, RoomSummary } from '@/lib/api/types'
+import { PhotoUploadZone, type PhotoSlot } from '@/components/photos/PhotoUploadZone'
+import type { LocationSummary, RoomSummary, PhotoResponse } from '@/lib/api/types'
 
 interface LocationFormData {
   roomId: string
@@ -19,15 +21,43 @@ interface LocationFormProps {
   location?: LocationSummary
   rooms: RoomSummary[]
   defaultRoomId?: string
+  existingPhotos?: PhotoResponse[]
+}
+
+function createEmptySlots(): PhotoSlot[] {
+  return [
+    { file: null, existingUrl: null, existingId: null, progress: null },
+    { file: null, existingUrl: null, existingId: null, progress: null },
+    { file: null, existingUrl: null, existingId: null, progress: null },
+  ]
 }
 
 export function LocationForm({
   location,
   rooms,
   defaultRoomId,
+  existingPhotos,
 }: LocationFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const isEditing = !!location
+
+  const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(() => {
+    if (existingPhotos && existingPhotos.length > 0) {
+      const slots = createEmptySlots()
+      existingPhotos.forEach((p, i) => {
+        if (i < 3) {
+          slots[i] = {
+            file: null,
+            existingUrl: p.url,
+            existingId: p.id,
+            progress: null,
+          }
+        }
+      })
+      return slots
+    }
+    return createEmptySlots()
+  })
 
   const {
     register,
@@ -44,22 +74,57 @@ export function LocationForm({
   async function onSubmit(data: LocationFormData) {
     setSubmitting(true)
     try {
+      let locationId: string
+
       if (isEditing) {
         await updateLocation(location.id, {
           name: data.name.trim(),
           description: data.description.trim() || null,
         })
-        showToast('Local atualizado com sucesso!', 'success')
-        window.location.href = `/locations/${location.id}`
+        locationId = location.id
       } else {
         const created = await createLocation({
           roomId: data.roomId,
           name: data.name.trim(),
           description: data.description.trim() || null,
         })
-        showToast('Local criado com sucesso!', 'success')
-        window.location.href = `/locations/${created.id}`
+        locationId = created.id
       }
+
+      // Upload new photos sequentially
+      for (let i = 0; i < photoSlots.length; i++) {
+        const slot = photoSlots[i]
+        if (!slot || slot.file === null) continue
+
+        setPhotoSlots((prev) =>
+          prev.map((s, idx) => (idx === i ? { ...s, progress: 0 } : s)),
+        )
+
+        const interval = setInterval(() => {
+          setPhotoSlots((prev) =>
+            prev.map((s, idx) =>
+              idx === i && s.progress !== null && s.progress < 90
+                ? { ...s, progress: s.progress + 10 }
+                : s,
+            ),
+          )
+        }, 100)
+
+        try {
+          await uploadPhoto('location', locationId, slot.file)
+        } finally {
+          clearInterval(interval)
+          setPhotoSlots((prev) =>
+            prev.map((s, idx) => (idx === i ? { ...s, progress: 100 } : s)),
+          )
+        }
+      }
+
+      showToast(
+        isEditing ? 'Local atualizado com sucesso!' : 'Local criado com sucesso!',
+        'success',
+      )
+      window.location.href = `/locations/${locationId}`
     } catch {
       showToast('Erro ao salvar local. Tente novamente.', 'error')
     } finally {
@@ -119,6 +184,8 @@ export function LocationForm({
           maxLength: { value: 500, message: 'Máximo 500 caracteres' },
         })}
       />
+
+      <PhotoUploadZone slots={photoSlots} onChange={setPhotoSlots} onDeleteExisting={(id) => deletePhoto(id).catch(() => {})} />
 
       <Button type="submit" loading={submitting} fullWidth>
         {isEditing ? 'Salvar alterações' : 'Criar local'}

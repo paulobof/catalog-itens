@@ -44,7 +44,7 @@ export default async function EditRoomPage({ params }: EditRoomPageProps) {
         backLabel={`Voltar para ${room.name}`}
       />
       <div className="px-4 py-6">
-        <RoomForm room={room} />
+        <RoomForm room={room} existingPhotos={room.photos} />
       </div>
     </div>
   )
