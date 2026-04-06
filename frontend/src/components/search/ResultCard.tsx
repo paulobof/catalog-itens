@@ -30,17 +30,15 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
 }
 
 export function ResultCard({ product, query }: ResultCardProps) {
-  const thumbnail = product.photos?.[0]
-
   return (
     <Link
       href={`/products/${product.id}`}
       className="flex items-start gap-3 rounded-2xl border border-barbie-accent/20 bg-barbie-surface p-3 hover:bg-barbie-bg-soft transition-colors focus-visible:rounded-2xl"
     >
-      {thumbnail ? (
+      {product.thumbnailUrl ? (
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl">
           <Image
-            src={thumbnail.thumbnailUrl}
+            src={product.thumbnailUrl}
             alt={`Foto de ${product.name}`}
             fill
             sizes="80px"
@@ -74,8 +72,8 @@ export function ResultCard({ product, query }: ResultCardProps) {
 
         {product.totalQuantity > 0 && (
           <p className="mt-1 text-xs font-medium text-barbie-dark">
-            {product.totalQuantity} un. em {product.locationCount} local
-            {product.locationCount !== 1 ? 'is' : ''}
+            {product.totalQuantity} un. em {product.locations.length} local
+            {product.locations.length !== 1 ? 'is' : ''}
           </p>
         )}
       </div>

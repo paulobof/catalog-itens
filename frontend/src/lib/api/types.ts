@@ -97,16 +97,24 @@ export interface ProductSummary {
   id: string
   name: string
   description: string | null
-  photos: PhotoResponse[]
+  thumbnailUrl: string | null
   tags: TagResponse[]
-  locationCount: number
+  locations: ProductLocationResponse[]
   totalQuantity: number
   createdAt: string
   updatedAt: string
 }
 
-export interface ProductDetail extends ProductSummary {
+export interface ProductDetail {
+  id: string
+  name: string
+  description: string | null
+  photos: PhotoResponse[]
+  tags: TagResponse[]
   locations: ProductLocationResponse[]
+  totalQuantity: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ProductLocationResponse {

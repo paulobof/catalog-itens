@@ -507,9 +507,9 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                 <Link href={`/products/${product.id}`} className="block">
                   <Card interactive className="overflow-hidden">
                     <div className="relative">
-                      {product.photos?.[0] ? (
+                      {product.thumbnailUrl ? (
                         <div className="relative h-32 w-full">
-                          <Image src={product.photos[0].thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                          <Image src={product.thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
                         </div>
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">

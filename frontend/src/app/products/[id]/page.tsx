@@ -45,8 +45,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <div>
       <PageHeader
         title={product.name}
-        backHref="/?tab=products"
-        backLabel="Voltar para produtos"
+        useBrowserBack
+        backLabel="Voltar"
         actions={
           <Link
             href={`/products/${product.id}/edit`}

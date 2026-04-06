@@ -12,7 +12,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, quantityBadge }: ProductCardProps) {
-  const thumbnail = product.photos?.[0]
   const primaryTag = product.tags[0]
 
   return (
@@ -21,10 +20,10 @@ export function ProductCard({ product, quantityBadge }: ProductCardProps) {
       className="block focus-visible:rounded-2xl"
     >
       <Card interactive className="overflow-hidden">
-        {thumbnail ? (
+        {product.thumbnailUrl ? (
           <div className="relative h-40 w-full">
             <Image
-              src={thumbnail.thumbnailUrl}
+              src={product.thumbnailUrl}
               alt={`Foto de ${product.name}`}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -66,7 +65,7 @@ export function ProductCard({ product, quantityBadge }: ProductCardProps) {
             {product.tags.length > 1 && (
               <Badge variant="default">+{product.tags.length - 1}</Badge>
             )}
-            {product.locationCount > 0 && (
+            {product.totalQuantity > 0 && (
               <span className="ml-auto text-xs text-barbie-dark font-medium">
                 {product.totalQuantity} un.
               </span>

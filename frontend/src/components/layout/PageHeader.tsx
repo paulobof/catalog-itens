@@ -1,10 +1,16 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 
 interface PageHeaderProps {
   title: string
+  /** If provided, renders a Link. Otherwise back button calls router.back(). */
   backHref?: string
   backLabel?: string
+  /** Force using browser history.back() even if backHref is provided (as fallback). */
+  useBrowserBack?: boolean
   actions?: React.ReactNode
   className?: string
 }
@@ -30,9 +36,22 @@ export function PageHeader({
   title,
   backHref,
   backLabel = 'Voltar',
+  useBrowserBack = false,
   actions,
   className,
 }: PageHeaderProps) {
+  const router = useRouter()
+
+  function handleBack() {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else if (backHref) {
+      router.push(backHref)
+    }
+  }
+
+  const showBack = useBrowserBack || backHref
+
   return (
     <header
       className={cn(
@@ -40,14 +59,25 @@ export function PageHeader({
         className,
       )}
     >
-      {backHref && (
-        <Link
-          href={backHref}
-          aria-label={backLabel}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft"
-        >
-          <BackArrowIcon />
-        </Link>
+      {showBack && (
+        useBrowserBack ? (
+          <button
+            type="button"
+            onClick={handleBack}
+            aria-label={backLabel}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft"
+          >
+            <BackArrowIcon />
+          </button>
+        ) : (
+          <Link
+            href={backHref!}
+            aria-label={backLabel}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft"
+          >
+            <BackArrowIcon />
+          </Link>
+        )
       )}
       <h1 className="flex-1 truncate text-lg font-bold text-barbie-text">
         {title}
