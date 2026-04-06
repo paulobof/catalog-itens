@@ -55,7 +55,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-black text-barbie-primary">
-            Catálogo de Itens
+            SakaBof Catálogo
           </h1>
           <p className="mt-2 text-sm text-barbie-text/60">
             Digite suas credenciais para acessar

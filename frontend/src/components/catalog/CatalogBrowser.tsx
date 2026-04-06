@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardBody } from '@/components/ui/Card'
@@ -101,7 +102,11 @@ function EditIcon() {
 // ---------------------------------------------------------------------------
 
 export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
-  const [view, setView] = useState<View>('rooms')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const roomIdParam = searchParams.get('room')
+  const locationIdParam = searchParams.get('location')
+
   const [rooms, setRooms] = useState<RoomSummary[]>(initialRooms)
   const [locations, setLocations] = useState<LocationSummary[]>([])
   const [products, setProducts] = useState<ProductSummary[]>([])
@@ -110,9 +115,75 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   // Search / text filter
   const [searchText, setSearchText] = useState('')
 
-  // Active filters
+  // Active filters (derived from URL)
   const [roomFilter, setRoomFilter] = useState<FilterChip | null>(null)
   const [locationFilter, setLocationFilter] = useState<FilterChip | null>(null)
+
+  // Derive view from URL params
+  const view: View = locationIdParam ? 'products' : roomIdParam ? 'locations' : 'rooms'
+
+  // Sync data with URL params (handles back/forward navigation)
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadFromUrl() {
+      // No room param → showing rooms list, nothing to fetch
+      if (!roomIdParam) {
+        setRoomFilter(null)
+        setLocationFilter(null)
+        setLocations([])
+        setProducts([])
+        setSearchText('')
+        return
+      }
+
+      // Has room param → load locations
+      const room = rooms.find((r) => r.id === roomIdParam)
+      if (room && !cancelled) {
+        setRoomFilter({ id: room.id, label: room.name })
+      }
+
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/locations?roomId=${roomIdParam}`)
+        const data: LocationSummary[] = await res.json()
+        if (cancelled) return
+        setLocations(data)
+
+        // Has location param → also load products
+        if (locationIdParam) {
+          const loc = data.find((l) => l.id === locationIdParam)
+          if (loc) setLocationFilter({ id: loc.id, label: loc.name })
+
+          const detailRes = await fetch(`/api/locations/${locationIdParam}`)
+          const detail = await detailRes.json()
+          if (cancelled) return
+
+          const productRes = await fetch(`/api/products?roomId=${roomIdParam}&size=50`)
+          const productData = await productRes.json()
+          if (cancelled) return
+
+          const locationProductIds = new Set(
+            detail.products.map((p: { productId: string }) => p.productId),
+          )
+          const filtered = productData.content.filter((p: ProductSummary) =>
+            locationProductIds.has(p.id),
+          )
+          setProducts(filtered)
+        } else {
+          setLocationFilter(null)
+          setProducts([])
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadFromUrl()
+    return () => {
+      cancelled = true
+    }
+  }, [roomIdParam, locationIdParam, rooms])
 
   // Filtered lists based on search text
   const normalizedSearch = searchText.toLowerCase().trim()
@@ -141,65 +212,26 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     [products, normalizedSearch],
   )
 
-  // Drill into a room → show its locations
-  const selectRoom = useCallback(async (room: RoomSummary) => {
-    setLoading(true)
+  // Navigation helpers (push URL — useEffect handles fetching)
+  const selectRoom = useCallback((room: RoomSummary) => {
     setSearchText('')
-    try {
-      const res = await fetch(`/api/locations?roomId=${room.id}`)
-      const data: LocationSummary[] = await res.json()
-      setLocations(data)
-      setRoomFilter({ id: room.id, label: room.name })
-      setLocationFilter(null)
-      setView('locations')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    router.push(`/?room=${room.id}`)
+  }, [router])
 
-  // Drill into a location → show its products
-  const selectLocation = useCallback(async (location: LocationSummary) => {
-    setLoading(true)
+  const selectLocation = useCallback((location: LocationSummary) => {
     setSearchText('')
-    try {
-      const res = await fetch(`/api/locations/${location.id}`)
-      const detail = await res.json()
-      // detail.products has ProductInLocationResponse, we need to fetch full products
-      // For now, fetch products filtered by roomId to get the ones in this location
-      const productRes = await fetch(`/api/products?roomId=${roomFilter?.id}&size=50`)
-      const productData = await productRes.json()
-      // Filter products that are in this location
-      const locationProductIds = new Set(
-        detail.products.map((p: { productId: string }) => p.productId)
-      )
-      const filtered = productData.content.filter(
-        (p: ProductSummary) => locationProductIds.has(p.id)
-      )
-      setProducts(filtered)
-      setLocationFilter({ id: location.id, label: location.name })
-      setView('products')
-    } finally {
-      setLoading(false)
-    }
-  }, [roomFilter])
+    router.push(`/?room=${roomIdParam}&location=${location.id}`)
+  }, [router, roomIdParam])
 
-  // Remove location filter → go back to locations
   const clearLocationFilter = useCallback(() => {
-    setLocationFilter(null)
-    setProducts([])
     setSearchText('')
-    setView('locations')
-  }, [])
+    router.push(`/?room=${roomIdParam}`)
+  }, [router, roomIdParam])
 
-  // Remove room filter → go back to rooms
   const clearRoomFilter = useCallback(() => {
-    setRoomFilter(null)
-    setLocationFilter(null)
-    setLocations([])
-    setProducts([])
     setSearchText('')
-    setView('rooms')
-  }, [])
+    router.push('/')
+  }, [router])
 
   // Delete a room (soft-delete via API)
   const deleteRoom = useCallback(async (room: RoomSummary) => {

@@ -11,8 +11,8 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Catalog Itens',
-    template: '%s | Catalog Itens',
+    default: 'SakaBof Catálogo',
+    template: '%s | SakaBof Catálogo',
   },
   description: 'Catálogo pessoal de itens da casa organizados por cômodos e locais.',
   robots: {
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.webmanifest',
   icons: {
-    icon: '/icon-192.png',
-    apple: '/apple-icon-180.png',
+    icon: '/icon.svg',
+    apple: '/icon.svg',
   },
 }
 

@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Catalog Itens',
-    short_name: 'Catalog',
+    name: 'SakaBof Catálogo',
+    short_name: 'SakaBof',
     description: 'Catálogo pessoal de itens da casa organizados por cômodos.',
     start_url: '/',
     display: 'standalone',
@@ -11,7 +11,14 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#ec407a',
     orientation: 'portrait-primary',
     categories: ['productivity', 'utilities'],
-    icons: [],
+    icons: [
+      {
+        src: '/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any',
+      },
+    ],
     screenshots: [],
   }
 }
