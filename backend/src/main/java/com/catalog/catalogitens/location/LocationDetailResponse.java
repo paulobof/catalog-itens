@@ -21,6 +21,7 @@ public record LocationDetailResponse(
     public record LocationProductEntry(
             UUID productId,
             String productName,
+            String thumbnailUrl,
             int quantity
     ) {}
 }

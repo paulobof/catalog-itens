@@ -103,15 +103,31 @@ export default async function LocationPage({ params }: LocationPageProps) {
             </p>
           </div>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {location.products.map((product) => (
               <li key={product.productId}>
                 <Link href={`/products/${product.productId}`} className="block">
-                  <Card interactive>
-                    <CardBody>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-barbie-text">{product.productName}</span>
-                        <span className="rounded-full bg-barbie-primary px-2 py-0.5 text-xs font-semibold text-white">
+                  <Card interactive className="overflow-hidden">
+                    {product.thumbnailUrl ? (
+                      <div className="relative h-32 w-full">
+                        <Image
+                          src={product.thumbnailUrl}
+                          alt={product.productName}
+                          fill
+                          sizes="(max-width: 640px) 50vw, 25vw"
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
+                        <span className="text-3xl" aria-hidden="true">📦</span>
+                      </div>
+                    )}
+                    <CardBody className="pt-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-bold text-barbie-text">{product.productName}</span>
+                        <span className="shrink-0 rounded-full bg-barbie-primary px-2 py-0.5 text-xs font-semibold text-white">
                           x{product.quantity}
                         </span>
                       </div>

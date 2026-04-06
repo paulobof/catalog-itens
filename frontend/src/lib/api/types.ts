@@ -74,6 +74,7 @@ export interface LocationDetail extends LocationSummary {
 export interface ProductInLocationResponse {
   productId: string
   productName: string
+  thumbnailUrl: string | null
   quantity: number
 }
 

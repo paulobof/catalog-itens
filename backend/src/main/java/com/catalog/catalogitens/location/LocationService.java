@@ -54,10 +54,16 @@ public class LocationService {
 
         long productCount = locationRepository.countActiveProductsByLocationId(id);
 
+        List<UUID> productIds = location.getProductLocations().stream()
+                .map(pl -> pl.getProduct().getId())
+                .toList();
+        Map<UUID, String> productThumbnails = thumbnailService.generateFirstThumbnailUrls("product", productIds);
+
         List<LocationDetailResponse.LocationProductEntry> products = location.getProductLocations().stream()
                 .map(pl -> new LocationDetailResponse.LocationProductEntry(
                         pl.getProduct().getId(),
                         pl.getProduct().getName(),
+                        productThumbnails.get(pl.getProduct().getId()),
                         pl.getQuantity()
                 ))
                 .toList();
