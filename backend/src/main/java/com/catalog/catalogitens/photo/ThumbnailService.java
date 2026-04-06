@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class ThumbnailService {
 
-    private static final int THUMBNAIL_SIZE = 300;
+    private static final int THUMBNAIL_SIZE = 600;
     private static final String OUTPUT_FORMAT = "jpeg";
     private static final String CONTENT_TYPE = "image/jpeg";
 
@@ -35,13 +35,15 @@ public class ThumbnailService {
         return generateThumbnailUrl(photos.getFirst().getObjectKey());
     }
 
+    /**
+     * Returns a presigned URL for the FULL original image (2048px max).
+     * Next.js Image component will optimize it to the actual display size,
+     * so we get sharp images on retina screens without managing multiple sizes.
+     * The thumbnail file (600px) is kept on disk as a fallback for clients
+     * that don't have an image optimizer.
+     */
     public String generateThumbnailUrl(String objectKey) {
-        try {
-            String thumbKey = objectKey.replace("photos/", "thumbs/");
-            return storageService.generatePresignedUrl(thumbKey);
-        } catch (Exception e) {
-            return storageService.generatePresignedUrl(objectKey);
-        }
+        return storageService.generatePresignedUrl(objectKey);
     }
 
     public Map<UUID, String> generateFirstThumbnailUrls(String entityType, List<UUID> entityIds) {
@@ -71,7 +73,7 @@ public class ThumbnailService {
                 .size(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
                 .keepAspectRatio(true)
                 .outputFormat(OUTPUT_FORMAT)
-                .outputQuality(0.75)
+                .outputQuality(0.85)
                 .toOutputStream(out);
         return out.toByteArray();
     }
