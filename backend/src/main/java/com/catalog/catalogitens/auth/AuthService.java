@@ -18,12 +18,23 @@ public class AuthService {
     private final AppUserRepository userRepository;
 
     public Optional<AuthResponse> authenticate(String email, String password) {
-        return userRepository.findByEmail(email.toLowerCase().trim())
-                .filter(user -> encoder.matches(password + PEPPER, user.getPassword()))
-                .map(user -> {
-                    log.info("Login bem-sucedido: {}", email);
-                    return new AuthResponse(user.getId().toString(), user.getEmail(), user.getName());
-                });
+        String normalizedEmail = email.toLowerCase().trim();
+        log.info("Tentativa de login: {}", normalizedEmail);
+
+        Optional<AppUser> userOpt = userRepository.findByEmail(normalizedEmail);
+        if (userOpt.isEmpty()) {
+            log.warn("Login falhou — usuário não encontrado: {}", normalizedEmail);
+            return Optional.empty();
+        }
+
+        AppUser user = userOpt.get();
+        if (!encoder.matches(password + PEPPER, user.getPassword())) {
+            log.warn("Login falhou — senha incorreta: {}", normalizedEmail);
+            return Optional.empty();
+        }
+
+        log.info("Login bem-sucedido: {}", normalizedEmail);
+        return Optional.of(new AuthResponse(user.getId().toString(), user.getEmail(), user.getName()));
     }
 
     public static String hashPassword(String rawPassword) {

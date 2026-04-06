@@ -55,13 +55,36 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus,loggers
+      base-path: /actuator
   endpoint:
     health:
-      show-details: never
+      show-details: when-authorized
+      show-components: always
+    metrics:
+      enabled: true
+  metrics:
+    tags:
+      application: catalog-itens
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+info:
+  app:
+    name: catalog-itens
+    description: Catálogo de itens domésticos
+    version: 1.0.0
 
 logging:
   level:
-    com.catalog: INFO
+    com.catalog: DEBUG
+    com.catalog.catalogitens.auth: DEBUG
     org.springframework.web: WARN
     org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

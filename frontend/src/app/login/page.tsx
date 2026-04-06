@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -15,24 +13,39 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
+    console.log('[login] submit start', { email })
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       })
+
+      console.log('[login] response', res.status)
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setError(data.message ?? 'E-mail ou senha incorretos')
+        console.warn('[login] failed', res.status, data)
+        setError(data.message ?? `Falha (HTTP ${res.status})`)
         return
       }
 
-      router.push('/')
-      router.refresh()
-    } catch {
-      setError('Erro de conexão. Tente novamente.')
+      console.log('[login] success — navigating')
+      // Hard navigation forces middleware to re-run with the new cookie
+      window.location.href = '/'
+    } catch (err) {
+      console.error('[login] error', err)
+      const message = err instanceof Error
+        ? (err.name === 'AbortError' ? 'Timeout — servidor não respondeu' : err.message)
+        : 'Erro de conexão'
+      setError(message)
     } finally {
+      clearTimeout(timeoutId)
       setLoading(false)
     }
   }
