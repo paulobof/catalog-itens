@@ -43,8 +43,6 @@ services:
       - "traefik.docker.network=dokploy-network"
     environment:
       NODE_ENV: production
-      # Authentication password (single-user app)
-      AUTH_PASSWORD: ${AUTH_PASSWORD:?AUTH_PASSWORD is required}
       # Server-side API URL (RSC / Server Actions call backend directly)
       API_URL: http://backend:8080
       # Client-side API URL (browser JS is proxied through Next.js route handlers)
