@@ -15,7 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class CatalogItensApplicationTests {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    @SuppressWarnings("resource")
+    static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("catalog_itens_test")
             .withUsername("catalog")
             .withPassword("changeme");
