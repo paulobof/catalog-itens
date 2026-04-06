@@ -6,7 +6,6 @@ import com.catalog.catalogitens.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,7 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -27,7 +25,6 @@ import java.util.concurrent.CompletableFuture;
 public class PhotoService {
 
     private static final int MAX_PHOTOS_PER_ENTITY = 3;
-    private static final int THUMBNAIL_SIZE = 300;
     private static final int MAX_DIMENSION = 2048;
     private static final String OUTPUT_FORMAT = "jpeg";
     private static final String CONTENT_TYPE = "image/jpeg";
@@ -45,6 +42,7 @@ public class PhotoService {
 
     private final PhotoRepository photoRepository;
     private final StorageService storageService;
+    private final ThumbnailService thumbnailService;
 
     @Transactional(readOnly = true)
     public List<PhotoResponse> findByEntity(String entityType, UUID entityId) {
@@ -73,7 +71,7 @@ public class PhotoService {
         storageService.upload(objectKey, new ByteArrayInputStream(imageBytes), CONTENT_TYPE, imageBytes.length);
 
         // Generate and upload thumbnail asynchronously
-        uploadThumbnailAsync(imageBytes, thumbKey);
+        thumbnailService.uploadThumbnailAsync(imageBytes, thumbKey);
 
         int sortOrder = (int) currentCount;
         Photo photo = new Photo();
@@ -88,17 +86,6 @@ public class PhotoService {
 
         log.info("Uploaded photo {} for {}/{}", photo.getId(), entityType, entityId);
         return toResponse(photo);
-    }
-
-    @Async("photoExecutor")
-    public CompletableFuture<Void> uploadThumbnailAsync(byte[] imageBytes, String thumbKey) {
-        try {
-            byte[] thumbBytes = generateThumbnail(imageBytes);
-            storageService.upload(thumbKey, new ByteArrayInputStream(thumbBytes), CONTENT_TYPE, thumbBytes.length);
-        } catch (Exception e) {
-            log.error("Failed to generate/upload thumbnail for key {}: {}", thumbKey, e.getMessage(), e);
-        }
-        return CompletableFuture.completedFuture(null);
     }
 
     @Transactional
@@ -211,17 +198,6 @@ public class PhotoService {
         } catch (IOException e) {
             throw new InvalidFileException("Failed to process image: " + e.getMessage());
         }
-    }
-
-    private byte[] generateThumbnail(byte[] imageBytes) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Thumbnails.of(new ByteArrayInputStream(imageBytes))
-                .size(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
-                .keepAspectRatio(true)
-                .outputFormat(OUTPUT_FORMAT)
-                .outputQuality(0.75)
-                .toOutputStream(out);
-        return out.toByteArray();
     }
 
     private PhotoResponse toResponse(Photo photo) {

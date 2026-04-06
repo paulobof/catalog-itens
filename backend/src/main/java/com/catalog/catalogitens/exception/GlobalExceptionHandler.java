@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(buildError(HttpStatus.CONFLICT,
-                        "Resource already exists or violates a uniqueness constraint", request));
+                        "Recurso já existe ou viola uma restrição de unicidade", request));
     }
 
     @ExceptionHandler(PhotoLimitExceededException.class)
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
         log.warn("Upload size exceeded: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(buildError(HttpStatus.BAD_REQUEST,
-                        "File size exceeds the maximum allowed (5MB per file, 15MB per request)", request));
+                        "Tamanho do arquivo excede o máximo permitido (5MB por arquivo, 15MB por requisição)", request));
     }
 
     @ExceptionHandler(StorageException.class)
@@ -89,18 +89,19 @@ public class GlobalExceptionHandler {
         log.error("Storage error: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(buildError(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Storage service unavailable. Please try again later.", request));
+                        "Serviço de armazenamento indisponível. Tente novamente mais tarde.", request));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
         String debugMessage = ex.getClass().getSimpleName() + ": " + ex.getMessage();
         if (ex.getCause() != null) {
             debugMessage += " | Caused by: " + ex.getCause().getClass().getSimpleName() + ": " + ex.getCause().getMessage();
         }
+        log.error("Unexpected error: {}", debugMessage, ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(buildError(HttpStatus.INTERNAL_SERVER_ERROR, debugMessage, request));
+                .body(buildError(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Erro interno do servidor. Tente novamente.", request));
     }
 
     private ErrorResponse buildError(HttpStatus status, String message, HttpServletRequest request) {

@@ -7,6 +7,7 @@ import com.catalog.catalogitens.location.LocationRepository;
 import com.catalog.catalogitens.photo.Photo;
 import com.catalog.catalogitens.photo.PhotoRepository;
 import com.catalog.catalogitens.photo.StorageService;
+import com.catalog.catalogitens.photo.ThumbnailService;
 import com.catalog.catalogitens.tag.Tag;
 import com.catalog.catalogitens.tag.TagRepository;
 import jakarta.persistence.EntityManager;
@@ -35,6 +36,7 @@ public class ProductService {
     private final TagRepository tagRepository;
     private final PhotoRepository photoRepository;
     private final StorageService storageService;
+    private final ThumbnailService thumbnailService;
     private final EntityManager entityManager;
 
     @Transactional(readOnly = true)
@@ -49,7 +51,7 @@ public class ProductService {
         Page<ProductSummaryResponse> responses = products.map(product -> {
             List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId("product", product.getId());
             String thumbnailUrl = photos.isEmpty() ? null
-                    : generateThumbnailUrl(photos.getFirst().getObjectKey());
+                    : thumbnailService.generateThumbnailUrl(photos.getFirst().getObjectKey());
 
             List<ProductSummaryResponse.TagEntry> tags = product.getProductTags().stream()
                     .map(pt -> new ProductSummaryResponse.TagEntry(
@@ -102,7 +104,7 @@ public class ProductService {
                 .map(ph -> new ProductDetailResponse.PhotoEntry(
                         ph.getId(),
                         storageService.generatePresignedUrl(ph.getObjectKey()),
-                        generateThumbnailUrl(ph.getObjectKey()),
+                        thumbnailService.generateThumbnailUrl(ph.getObjectKey()),
                         ph.getOriginalFilename(),
                         ph.getFileSize(),
                         ph.getSortOrder()))
@@ -194,7 +196,7 @@ public class ProductService {
         for (Photo photo : photos) {
             try {
                 storageService.delete(photo.getObjectKey());
-                String thumbKey = toThumbKey(photo.getObjectKey());
+                String thumbKey = photo.getObjectKey().replace("photos/", "thumbs/");
                 storageService.delete(thumbKey);
             } catch (Exception e) {
                 log.error("Failed to delete photo from storage: {}", photo.getObjectKey(), e);
@@ -269,17 +271,4 @@ public class ProductService {
         );
     }
 
-    private String generateThumbnailUrl(String objectKey) {
-        try {
-            String thumbKey = toThumbKey(objectKey);
-            return storageService.generatePresignedUrl(thumbKey);
-        } catch (Exception e) {
-            // Fall back to full image URL if thumbnail doesn't exist
-            return storageService.generatePresignedUrl(objectKey);
-        }
-    }
-
-    private String toThumbKey(String objectKey) {
-        return objectKey.replace("photos/", "thumbs/");
-    }
 }

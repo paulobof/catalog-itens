@@ -5,11 +5,11 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record TagRequest(
-        @NotBlank(message = "Name is required")
-        @Size(max = 50, message = "Name must not exceed 50 characters")
+        @NotBlank(message = "Nome é obrigatório")
+        @Size(max = 50, message = "Nome não pode exceder 50 caracteres")
         String name,
 
         @Pattern(regexp = "^#[0-9a-fA-F]{6}$",
-                 message = "Color must be a valid hex color code (e.g. #ff69b4)")
+                 message = "Cor deve ser um código hexadecimal válido (ex: #ff69b4)")
         String color
 ) {}

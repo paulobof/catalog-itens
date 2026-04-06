@@ -1,11 +1,10 @@
 package com.catalog.catalogitens.location;
 
 import com.catalog.catalogitens.exception.ResourceNotFoundException;
-import com.catalog.catalogitens.photo.Photo;
 import com.catalog.catalogitens.photo.PhotoRepository;
 import com.catalog.catalogitens.photo.PhotoResponse;
 import com.catalog.catalogitens.photo.PhotoService;
-import com.catalog.catalogitens.photo.StorageService;
+import com.catalog.catalogitens.photo.ThumbnailService;
 import com.catalog.catalogitens.product.ProductLocationRepository;
 import com.catalog.catalogitens.room.Room;
 import com.catalog.catalogitens.room.RoomRepository;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -27,7 +27,7 @@ public class LocationService {
     private final ProductLocationRepository productLocationRepository;
     private final PhotoRepository photoRepository;
     private final PhotoService photoService;
-    private final StorageService storageService;
+    private final ThumbnailService thumbnailService;
 
     @Transactional(readOnly = true)
     public List<LocationSummaryResponse> findAll(UUID roomId) {
@@ -35,10 +35,13 @@ public class LocationService {
                 ? locationRepository.findAllByRoomId(roomId)
                 : locationRepository.findAllActive();
 
+        List<UUID> locationIds = locations.stream().map(Location::getId).toList();
+        Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls("location", locationIds);
+
         return locations.stream()
                 .map(loc -> {
                     long count = locationRepository.countActiveProductsByLocationId(loc.getId());
-                    String thumbnailUrl = generateFirstThumbnailUrl("location", loc.getId());
+                    String thumbnailUrl = thumbnails.get(loc.getId());
                     return LocationSummaryResponse.from(loc, count, thumbnailUrl);
                 })
                 .toList();
@@ -98,7 +101,7 @@ public class LocationService {
         location = locationRepository.save(location);
         log.info("Updated location: {} ({})", location.getName(), location.getId());
         long count = locationRepository.countActiveProductsByLocationId(id);
-        String thumbnailUrl = generateFirstThumbnailUrl("location", id);
+        String thumbnailUrl = thumbnailService.generateFirstThumbnailUrl("location", id);
         return LocationSummaryResponse.from(location, count, thumbnailUrl);
     }
 
@@ -109,24 +112,11 @@ public class LocationService {
 
         // Cascade soft-delete ProductLocations before soft-deleting Location
         productLocationRepository.softDeleteByLocationId(id);
+
+        // Soft-delete photos for this location
+        photoRepository.softDeleteAllByEntityTypeAndEntityId("location", id);
+
         locationRepository.deleteById(id);  // triggers @SQLDelete
         log.warn("Soft-deleted location: {}", id);
-    }
-
-    private String generateFirstThumbnailUrl(String entityType, UUID entityId) {
-        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(entityType, entityId);
-        if (photos.isEmpty()) {
-            return null;
-        }
-        return generateThumbnailUrl(photos.getFirst().getObjectKey());
-    }
-
-    private String generateThumbnailUrl(String objectKey) {
-        try {
-            String thumbKey = objectKey.replace("photos/", "thumbs/");
-            return storageService.generatePresignedUrl(thumbKey);
-        } catch (Exception e) {
-            return storageService.generatePresignedUrl(objectKey);
-        }
     }
 }

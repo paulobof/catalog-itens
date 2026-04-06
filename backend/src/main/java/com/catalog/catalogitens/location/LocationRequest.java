@@ -7,12 +7,13 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record LocationRequest(
-        @NotNull(message = "roomId is required")
+        @NotNull(message = "roomId é obrigatório")
         UUID roomId,
 
-        @NotBlank(message = "Name is required")
-        @Size(max = 100, message = "Name must not exceed 100 characters")
+        @NotBlank(message = "Nome é obrigatório")
+        @Size(max = 100, message = "Nome não pode exceder 100 caracteres")
         String name,
 
+        @Size(max = 2000, message = "Descrição não pode exceder 2000 caracteres")
         String description
 ) {}

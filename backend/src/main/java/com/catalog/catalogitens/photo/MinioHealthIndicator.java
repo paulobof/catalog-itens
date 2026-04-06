@@ -17,9 +17,9 @@ public class MinioHealthIndicator implements HealthIndicator {
             if (storageService.isHealthy()) {
                 return Health.up().build();
             }
-            return Health.up().withDetail("minio", "degraded - bucket not accessible").build();
+            return Health.down().withDetail("minio", "bucket not accessible").build();
         } catch (Exception e) {
-            return Health.up().withDetail("minio", "degraded - " + e.getMessage()).build();
+            return Health.down().withDetail("minio", e.getMessage()).build();
         }
     }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils/cn'
 
@@ -45,6 +45,26 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
   const [dragging, setDragging] = useState(false)
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const blobUrlsRef = useRef<string[]>([])
+
+  // Manage blob URLs: create them when slots change, revoke old ones on cleanup
+  const previewUrls = slots.map((slot) => {
+    if (slot.existingUrl) return slot.existingUrl
+    if (slot.file) {
+      const url = URL.createObjectURL(slot.file)
+      blobUrlsRef.current.push(url)
+      return url
+    }
+    return null
+  })
+
+  useEffect(() => {
+    const urls = blobUrlsRef.current
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url))
+      blobUrlsRef.current = []
+    }
+  }, [slots])
 
   const activeSlots = slots.filter(
     (s) => s.file !== null || s.existingId !== null,
@@ -188,9 +208,7 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
       >
         {slots.map((slot, index) => {
           const isEmpty = slot.file === null && slot.existingId === null
-          const previewUrl =
-            slot.existingUrl ??
-            (slot.file ? URL.createObjectURL(slot.file) : null)
+          const previewUrl = previewUrls[index] ?? null
 
           return (
             <div
@@ -229,7 +247,7 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
                       fill
                       sizes="(max-width: 640px) 30vw, 120px"
                       className="object-cover"
-                      unoptimized={!!slot.file}
+                      unoptimized
                     />
                   )}
 

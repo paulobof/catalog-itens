@@ -66,6 +66,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
             priority
             sizes="100vw"
             className="object-cover"
+            unoptimized
           />
         </div>
       )}

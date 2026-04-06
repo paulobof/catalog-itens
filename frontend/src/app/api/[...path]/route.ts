@@ -25,12 +25,20 @@ async function proxyRequest(
     body = await request.blob()
   }
 
-  const response = await fetch(targetUrl, {
-    method,
-    headers,
-    body,
-    redirect: 'manual',
-  })
+  let response: Response
+  try {
+    response = await fetch(targetUrl, {
+      method,
+      headers,
+      body,
+      redirect: 'manual',
+    })
+  } catch {
+    return NextResponse.json(
+      { error: 'Backend unavailable' },
+      { status: 502 },
+    )
+  }
 
   const responseHeaders = new Headers()
   const allowedResponseHeaders = [

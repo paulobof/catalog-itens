@@ -7,10 +7,11 @@ import java.util.List;
 import java.util.UUID;
 
 public record UpdateProductRequest(
-        @NotBlank(message = "Name is required")
-        @Size(max = 150, message = "Name must not exceed 150 characters")
+        @NotBlank(message = "Nome é obrigatório")
+        @Size(max = 150, message = "Nome não pode exceder 150 caracteres")
         String name,
 
+        @Size(max = 2000, message = "Descrição não pode exceder 2000 caracteres")
         String description,
 
         List<UUID> tagIds

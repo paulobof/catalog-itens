@@ -27,6 +27,14 @@ public interface PhotoRepository extends JpaRepository<Photo, UUID> {
     long countActiveByEntityTypeAndEntityId(@Param("entityType") String entityType,
                                              @Param("entityId") UUID entityId);
 
+    @Query("""
+            SELECT p FROM Photo p
+            WHERE p.entityType = :entityType AND p.entityId IN :entityIds AND p.deletedAt IS NULL
+            ORDER BY p.sortOrder, p.createdAt
+            """)
+    List<Photo> findActiveByEntityTypeAndEntityIds(@Param("entityType") String entityType,
+                                                    @Param("entityIds") List<UUID> entityIds);
+
     @Modifying(clearAutomatically = true)
     @Query(value = """
             UPDATE photo SET deleted_at = now()

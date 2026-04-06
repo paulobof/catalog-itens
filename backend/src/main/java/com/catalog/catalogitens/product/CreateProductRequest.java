@@ -10,10 +10,11 @@ import java.util.List;
 import java.util.UUID;
 
 public record CreateProductRequest(
-        @NotBlank(message = "Name is required")
-        @Size(max = 150, message = "Name must not exceed 150 characters")
+        @NotBlank(message = "Nome é obrigatório")
+        @Size(max = 150, message = "Nome não pode exceder 150 caracteres")
         String name,
 
+        @Size(max = 2000, message = "Descrição não pode exceder 2000 caracteres")
         String description,
 
         List<UUID> tagIds,
@@ -21,11 +22,11 @@ public record CreateProductRequest(
         List<ProductLocationEntry> locations
 ) {
     public record ProductLocationEntry(
-            @NotNull(message = "locationId is required")
+            @NotNull(message = "locationId é obrigatório")
             UUID locationId,
 
-            @Min(value = 1, message = "Quantity must be at least 1")
-            @Max(value = 99999, message = "Quantity must not exceed 99999")
+            @Min(value = 1, message = "Quantidade deve ser no mínimo 1")
+            @Max(value = 99999, message = "Quantidade não pode exceder 99999")
             int quantity
     ) {}
 }

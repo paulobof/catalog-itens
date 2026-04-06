@@ -87,6 +87,7 @@ export function PhotoCarousel({ photos, productName }: PhotoCarouselProps) {
               priority={index === 0}
               sizes="100vw"
               className="object-contain"
+              unoptimized
             />
           </div>
         ))}

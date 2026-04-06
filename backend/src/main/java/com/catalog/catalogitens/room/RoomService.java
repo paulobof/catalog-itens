@@ -1,13 +1,13 @@
 package com.catalog.catalogitens.room;
 
 import com.catalog.catalogitens.exception.ResourceNotFoundException;
+import com.catalog.catalogitens.location.Location;
 import com.catalog.catalogitens.location.LocationRepository;
 import com.catalog.catalogitens.location.LocationSummaryResponse;
-import com.catalog.catalogitens.photo.Photo;
 import com.catalog.catalogitens.photo.PhotoRepository;
 import com.catalog.catalogitens.photo.PhotoResponse;
 import com.catalog.catalogitens.photo.PhotoService;
-import com.catalog.catalogitens.photo.StorageService;
+import com.catalog.catalogitens.photo.ThumbnailService;
 import com.catalog.catalogitens.product.ProductLocationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -27,15 +28,19 @@ public class RoomService {
     private final ProductLocationRepository productLocationRepository;
     private final PhotoRepository photoRepository;
     private final PhotoService photoService;
-    private final StorageService storageService;
+    private final ThumbnailService thumbnailService;
 
     @Transactional(readOnly = true)
     public List<RoomSummaryResponse> findAll() {
-        return roomRepository.findAllActive().stream()
+        List<Room> rooms = roomRepository.findAllActive();
+        List<UUID> roomIds = rooms.stream().map(Room::getId).toList();
+        Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls("room", roomIds);
+
+        return rooms.stream()
                 .map(room -> {
                     long locCount = roomRepository.countActiveLocationsByRoomId(room.getId());
                     long prodCount = roomRepository.countActiveProductsByRoomId(room.getId());
-                    String thumbnailUrl = generateFirstThumbnailUrl("room", room.getId());
+                    String thumbnailUrl = thumbnails.get(room.getId());
                     return RoomSummaryResponse.from(room, locCount, prodCount, thumbnailUrl);
                 })
                 .toList();
@@ -52,7 +57,7 @@ public class RoomService {
         List<LocationSummaryResponse> locationResponses = room.getLocations().stream()
                 .map(loc -> {
                     long pCount = locationRepository.countActiveProductsByLocationId(loc.getId());
-                    String locThumb = generateFirstThumbnailUrl("location", loc.getId());
+                    String locThumb = thumbnailService.generateFirstThumbnailUrl("location", loc.getId());
                     return LocationSummaryResponse.from(loc, pCount, locThumb);
                 })
                 .toList();
@@ -92,7 +97,7 @@ public class RoomService {
         log.info("Updated room: {} ({})", room.getName(), room.getId());
         long locCount = roomRepository.countActiveLocationsByRoomId(id);
         long prodCount = roomRepository.countActiveProductsByRoomId(id);
-        String thumbnailUrl = generateFirstThumbnailUrl("room", id);
+        String thumbnailUrl = thumbnailService.generateFirstThumbnailUrl("room", id);
         return RoomSummaryResponse.from(room, locCount, prodCount, thumbnailUrl);
     }
 
@@ -103,25 +108,19 @@ public class RoomService {
 
         // Cascade soft-delete: ProductLocations → Locations → Room
         productLocationRepository.softDeleteByRoomId(id);
+
+        // Soft-delete photos for each location in this room
+        List<Location> locations = locationRepository.findAllByRoomId(id);
+        for (Location loc : locations) {
+            photoRepository.softDeleteAllByEntityTypeAndEntityId("location", loc.getId());
+        }
+
         locationRepository.softDeleteByRoomId(id);
+
+        // Soft-delete photos for the room itself
+        photoRepository.softDeleteAllByEntityTypeAndEntityId("room", id);
+
         roomRepository.deleteById(id);  // triggers @SQLDelete
         log.warn("Soft-deleted room: {}", id);
-    }
-
-    private String generateFirstThumbnailUrl(String entityType, UUID entityId) {
-        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(entityType, entityId);
-        if (photos.isEmpty()) {
-            return null;
-        }
-        return generateThumbnailUrl(photos.getFirst().getObjectKey());
-    }
-
-    private String generateThumbnailUrl(String objectKey) {
-        try {
-            String thumbKey = objectKey.replace("photos/", "thumbs/");
-            return storageService.generatePresignedUrl(thumbKey);
-        } catch (Exception e) {
-            return storageService.generatePresignedUrl(objectKey);
-        }
     }
 }

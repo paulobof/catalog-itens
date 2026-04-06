@@ -75,6 +75,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
             priority
             sizes="100vw"
             className="object-cover"
+            unoptimized
           />
         </div>
       )}

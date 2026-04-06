@@ -243,10 +243,11 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* Breadcrumb / Filter chips */}
-      <div className="flex flex-wrap items-center gap-2">
+      <nav aria-label="Navegacao do catalogo" className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={clearRoomFilter}
+          aria-label="Voltar para comodos"
           className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
             view === 'rooms'
               ? 'bg-barbie-primary text-white'
@@ -262,6 +263,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
             <button
               type="button"
               onClick={clearLocationFilter}
+              aria-label={`Ver locais de ${roomFilter.label}`}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                 view === 'locations'
                   ? 'bg-barbie-primary text-white'
@@ -300,7 +302,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
             </button>
           </>
         )}
-      </div>
+      </nav>
 
       {/* Search / filter bar */}
       <div className="relative">
@@ -311,6 +313,13 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
           type="text"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
+          aria-label={
+            view === 'rooms'
+              ? 'Filtrar comodos'
+              : view === 'locations'
+                ? 'Filtrar locais'
+                : 'Filtrar produtos'
+          }
           placeholder={
             view === 'rooms'
               ? 'Filtrar comodos...'
@@ -356,7 +365,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <div className="group/card relative">
                       {room.thumbnailUrl ? (
                         <div className="relative h-32 w-full">
-                          <Image src={room.thumbnailUrl} alt={room.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                          <Image src={room.thumbnailUrl} alt={room.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" unoptimized />
                         </div>
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
@@ -428,7 +437,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <div className="group/card relative">
                       {loc.thumbnailUrl ? (
                         <div className="relative h-32 w-full">
-                          <Image src={loc.thumbnailUrl} alt={loc.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                          <Image src={loc.thumbnailUrl} alt={loc.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" unoptimized />
                         </div>
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
@@ -500,7 +509,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <div className="relative">
                       {product.photos?.[0] ? (
                         <div className="relative h-32 w-full">
-                          <Image src={product.photos[0].thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
+                          <Image src={product.photos[0].thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" unoptimized />
                         </div>
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
@@ -599,6 +608,7 @@ function EmptyState({
       <p className="text-barbie-text/60">{message}</p>
       <Link
         href={href}
+        aria-label={cta}
         className="rounded-xl bg-barbie-gradient px-6 py-2 text-sm font-semibold text-white shadow-md"
       >
         {cta}

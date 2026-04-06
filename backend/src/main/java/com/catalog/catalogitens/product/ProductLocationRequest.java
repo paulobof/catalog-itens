@@ -7,10 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record ProductLocationRequest(
-        @NotNull(message = "locationId is required")
+        @NotNull(message = "locationId é obrigatório")
         UUID locationId,
 
-        @Min(value = 1, message = "Quantity must be at least 1")
-        @Max(value = 99999, message = "Quantity must not exceed 99999")
+        @Min(value = 1, message = "Quantidade deve ser no mínimo 1")
+        @Max(value = 99999, message = "Quantidade não pode exceder 99999")
         int quantity
 ) {}
