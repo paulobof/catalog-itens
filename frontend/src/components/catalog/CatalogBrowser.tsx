@@ -365,7 +365,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <div className="group/card relative">
                       {room.thumbnailUrl ? (
                         <div className="relative h-32 w-full">
-                          <Image src={room.thumbnailUrl} alt={room.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" unoptimized />
+                          <Image src={room.thumbnailUrl} alt={room.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
                         </div>
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
@@ -437,7 +437,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <div className="group/card relative">
                       {loc.thumbnailUrl ? (
                         <div className="relative h-32 w-full">
-                          <Image src={loc.thumbnailUrl} alt={loc.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" unoptimized />
+                          <Image src={loc.thumbnailUrl} alt={loc.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
                         </div>
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">
@@ -509,7 +509,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <div className="relative">
                       {product.photos?.[0] ? (
                         <div className="relative h-32 w-full">
-                          <Image src={product.photos[0].thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" unoptimized />
+                          <Image src={product.photos[0].thumbnailUrl} alt={product.name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-cover" />
                         </div>
                       ) : (
                         <div className="flex h-32 items-center justify-center bg-barbie-bg-soft">

@@ -75,7 +75,6 @@ export default async function LocationPage({ params }: LocationPageProps) {
             priority
             sizes="100vw"
             className="object-cover"
-            unoptimized
           />
         </div>
       )}
@@ -116,7 +115,6 @@ export default async function LocationPage({ params }: LocationPageProps) {
                           fill
                           sizes="(max-width: 640px) 50vw, 25vw"
                           className="object-cover"
-                          unoptimized
                         />
                       </div>
                     ) : (

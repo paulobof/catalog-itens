@@ -248,7 +248,7 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
                       fill
                       sizes="(max-width: 640px) 30vw, 120px"
                       className="object-cover"
-                      unoptimized
+                      unoptimized={!!slot.file}
                     />
                   )}
 
