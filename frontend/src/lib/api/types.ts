@@ -67,6 +67,7 @@ export interface CreateLocationRequest {
 }
 
 export interface UpdateLocationRequest {
+  roomId: string
   name: string
   description?: string | null
 }

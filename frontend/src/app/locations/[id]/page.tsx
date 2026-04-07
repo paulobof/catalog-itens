@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getLocationById } from '@/lib/api/locations'
+import { getRooms } from '@/lib/api/rooms'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FAB } from '@/components/layout/FAB'
 import { Card, CardBody } from '@/components/ui/Card'
+import { MoveLocationButton } from '@/components/locations/MoveLocationButton'
 import { ApiError } from '@/lib/api/client'
 import type { Metadata } from 'next'
 
@@ -40,6 +42,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
     throw err
   }
 
+  const rooms = await getRooms()
   const coverPhoto = location.photos?.[0]
 
   return (
@@ -49,12 +52,15 @@ export default async function LocationPage({ params }: LocationPageProps) {
         backHref={`/rooms/${location.roomId}`}
         backLabel={`Voltar para ${location.roomName}`}
         actions={
-          <Link
-            href={`/locations/${location.id}/edit`}
-            className="rounded-xl px-3 py-1.5 text-sm font-semibold text-barbie-primary hover:bg-barbie-bg-soft"
-          >
-            Editar
-          </Link>
+          <>
+            <MoveLocationButton location={location} rooms={rooms} />
+            <Link
+              href={`/locations/${location.id}/edit`}
+              className="rounded-xl px-3 py-1.5 text-sm font-semibold text-barbie-primary hover:bg-barbie-bg-soft"
+            >
+              Editar
+            </Link>
+          </>
         }
       />
 

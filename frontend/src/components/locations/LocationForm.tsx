@@ -78,6 +78,7 @@ export function LocationForm({
 
       if (isEditing) {
         await updateLocation(location.id, {
+          roomId: data.roomId,
           name: data.name.trim(),
           description: data.description.trim() || null,
         })
@@ -139,33 +140,31 @@ export function LocationForm({
       noValidate
       className="flex flex-col gap-4"
     >
-      {!isEditing && (
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="roomId"
-            className="text-sm font-semibold text-barbie-text"
-          >
-            Cômodo
-          </label>
-          <select
-            id="roomId"
-            className="w-full rounded-xl border border-barbie-accent bg-white px-4 py-2.5 text-barbie-text focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
-            {...register('roomId', { required: 'Selecione um cômodo' })}
-          >
-            <option value="">Selecione um cômodo...</option>
-            {rooms.map((room) => (
-              <option key={room.id} value={room.id}>
-                {room.name}
-              </option>
-            ))}
-          </select>
-          {errors.roomId && (
-            <p role="alert" className="text-xs text-red-600">
-              {errors.roomId.message}
-            </p>
-          )}
-        </div>
-      )}
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="roomId"
+          className="text-sm font-semibold text-barbie-text"
+        >
+          Cômodo
+        </label>
+        <select
+          id="roomId"
+          className="w-full rounded-xl border border-barbie-accent bg-white px-4 py-2.5 text-barbie-text focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
+          {...register('roomId', { required: 'Selecione um cômodo' })}
+        >
+          <option value="">Selecione um cômodo...</option>
+          {rooms.map((room) => (
+            <option key={room.id} value={room.id}>
+              {room.name}
+            </option>
+          ))}
+        </select>
+        {errors.roomId && (
+          <p role="alert" className="text-xs text-red-600">
+            {errors.roomId.message}
+          </p>
+        )}
+      </div>
 
       <Input
         label="Nome"

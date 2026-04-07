@@ -8,6 +8,7 @@ import { uploadPhoto, deletePhoto } from '@/lib/api/photos'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
 import { showToast } from '@/components/ui/Toast'
 import { PhotoUploadZone, type PhotoSlot } from '@/components/photos/PhotoUploadZone'
 import { TagPicker } from '@/components/tags/TagPicker'
@@ -71,6 +72,28 @@ function TrashIcon() {
   )
 }
 
+function MoveIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 9l-3 3 3 3" />
+      <path d="M2 12h13" />
+      <path d="M19 15l3-3-3-3" />
+      <path d="M22 12H9" />
+    </svg>
+  )
+}
+
 export function ProductForm({
   product,
   allTags,
@@ -129,6 +152,10 @@ export function ProductForm({
   })
 
   const [selectedLocationId, setSelectedLocationId] = useState('')
+
+  const [moveFromId, setMoveFromId] = useState<string | null>(null)
+  const [moveToId, setMoveToId] = useState<string>('')
+  const [moveQty, setMoveQty] = useState<number>(1)
 
   const {
     register,
@@ -196,6 +223,67 @@ export function ProductForm({
 
   function removeLocationEntry(locationId: string) {
     setLocationEntries((prev) => prev.filter((e) => e.locationId !== locationId))
+  }
+
+  function openMoveModal(fromLocationId: string) {
+    const source = locationEntries.find((e) => e.locationId === fromLocationId)
+    if (!source) return
+    setMoveFromId(fromLocationId)
+    setMoveToId('')
+    setMoveQty(source.quantity)
+  }
+
+  function closeMoveModal() {
+    setMoveFromId(null)
+    setMoveToId('')
+    setMoveQty(1)
+  }
+
+  function confirmMove() {
+    if (!moveFromId || !moveToId || moveFromId === moveToId) return
+    const source = locationEntries.find((e) => e.locationId === moveFromId)
+    if (!source) return
+    const qty = Math.min(Math.max(1, moveQty), source.quantity)
+
+    const destination = allLocations.find((l) => l.id === moveToId)
+    if (!destination) return
+
+    setLocationEntries((prev) => {
+      const updated: LocationEntry[] = []
+      let destinationMerged = false
+
+      for (const entry of prev) {
+        if (entry.locationId === moveFromId) {
+          const remaining = entry.quantity - qty
+          if (remaining > 0) {
+            updated.push({ ...entry, quantity: remaining })
+          }
+          continue
+        }
+        if (entry.locationId === moveToId) {
+          updated.push({
+            ...entry,
+            quantity: Math.min(MAX_QTY, entry.quantity + qty),
+          })
+          destinationMerged = true
+          continue
+        }
+        updated.push(entry)
+      }
+
+      if (!destinationMerged) {
+        updated.push({
+          locationId: destination.id,
+          locationName: destination.name,
+          roomName: destination.roomName,
+          quantity: qty,
+        })
+      }
+
+      return updated
+    })
+
+    closeMoveModal()
   }
 
   async function onSubmit(data: ProductFormData) {
@@ -329,23 +417,33 @@ export function ProductForm({
             {locationEntries.map((entry) => (
               <li
                 key={entry.locationId}
-                className="flex min-w-0 items-center gap-2 rounded-xl border border-barbie-accent/30 bg-barbie-surface px-3 py-2"
+                className="flex min-w-0 flex-col gap-2 rounded-xl border border-barbie-accent/30 bg-barbie-surface p-3"
               >
-                <div className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-barbie-text">
-                    {entry.locationName}
-                  </span>
-                  <span className="text-xs text-barbie-text/50">
-                    {entry.roomName}
-                  </span>
+                <div className="flex min-w-0 items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-barbie-text">
+                      {entry.locationName}
+                    </span>
+                    <span className="text-xs text-barbie-text/50">
+                      {entry.roomName}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeLocationEntry(entry.locationId)}
+                    aria-label={`Remover ${entry.locationName}`}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
+                  >
+                    <TrashIcon />
+                  </button>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex min-w-0 items-center gap-1">
                   <button
                     type="button"
                     onClick={() => decrementLocation(entry.locationId)}
                     disabled={entry.quantity <= MIN_QTY}
                     aria-label={`Diminuir quantidade em ${entry.locationName}`}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     −
                   </button>
@@ -369,25 +467,29 @@ export function ProductForm({
                       if (Number.isNaN(parsed)) return
                       setLocationQuantity(entry.locationId, parsed)
                     }}
-                    className="w-10 rounded-lg border border-barbie-accent bg-white px-1 py-1 text-center text-sm tabular-nums focus:border-barbie-primary focus:outline-none focus:ring-1 focus:ring-barbie-primary/30"
+                    className="w-12 shrink-0 rounded-lg border border-barbie-accent bg-white px-1 py-1 text-center text-sm tabular-nums focus:border-barbie-primary focus:outline-none focus:ring-1 focus:ring-barbie-primary/30"
                   />
                   <button
                     type="button"
                     onClick={() => incrementLocation(entry.locationId)}
                     disabled={entry.quantity >= MAX_QTY}
                     aria-label={`Aumentar quantidade em ${entry.locationName}`}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     +
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => removeLocationEntry(entry.locationId)}
-                    aria-label={`Remover ${entry.locationName}`}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
-                  >
-                    <TrashIcon />
-                  </button>
+                  <div className="flex-1" aria-hidden="true" />
+                  {allLocations.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => openMoveModal(entry.locationId)}
+                      aria-label={`Mover itens de ${entry.locationName}`}
+                      className="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-barbie-accent bg-white px-2 text-xs font-semibold text-barbie-dark hover:bg-barbie-bg-soft"
+                    >
+                      <MoveIcon />
+                      <span>Mover</span>
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
@@ -428,6 +530,148 @@ export function ProductForm({
       <Button type="submit" loading={submitting} fullWidth size="lg">
         {isEditing ? 'Salvar alterações' : 'Criar produto'}
       </Button>
+
+      <Modal
+        open={moveFromId !== null}
+        onClose={closeMoveModal}
+        title="Mover itens"
+      >
+        {(() => {
+          const source = moveFromId
+            ? locationEntries.find((e) => e.locationId === moveFromId)
+            : null
+          if (!source) return null
+          const destinationOptions = allLocations.filter(
+            (l) => l.id !== moveFromId,
+          )
+          const clampedQty = Math.min(
+            Math.max(1, moveQty || 1),
+            source.quantity,
+          )
+          return (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-barbie-text/70">
+                Movendo de <strong>{source.locationName}</strong>{' '}
+                <span className="text-barbie-text/50">
+                  ({source.roomName})
+                </span>
+                . Há <strong>{source.quantity}</strong> unidade
+                {source.quantity !== 1 ? 's' : ''} disponíve
+                {source.quantity !== 1 ? 'is' : 'l'}.
+              </p>
+
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="move-destination"
+                  className="text-sm font-semibold text-barbie-text"
+                >
+                  Destino
+                </label>
+                <select
+                  id="move-destination"
+                  value={moveToId}
+                  onChange={(e) => setMoveToId(e.target.value)}
+                  className="w-full rounded-xl border border-barbie-accent bg-white px-4 py-2.5 text-sm text-barbie-text focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
+                >
+                  <option value="">Selecione um local...</option>
+                  {destinationOptions.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.roomName} — {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="move-qty"
+                  className="text-sm font-semibold text-barbie-text"
+                >
+                  Quantidade a mover
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMoveQty((q) => Math.max(1, (q || 1) - 1))
+                    }
+                    disabled={clampedQty <= 1}
+                    aria-label="Diminuir quantidade a mover"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <input
+                    id="move-qty"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={moveQty}
+                    onChange={(e) => {
+                      const parsed = parseInt(
+                        e.target.value.replace(/[^0-9]/g, ''),
+                        10,
+                      )
+                      if (Number.isNaN(parsed)) {
+                        setMoveQty(1)
+                        return
+                      }
+                      setMoveQty(
+                        Math.min(source.quantity, Math.max(1, parsed)),
+                      )
+                    }}
+                    className="w-20 rounded-lg border border-barbie-accent bg-white px-2 py-2 text-center text-base tabular-nums focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMoveQty((q) =>
+                        Math.min(source.quantity, (q || 0) + 1),
+                      )
+                    }
+                    disabled={clampedQty >= source.quantity}
+                    aria-label="Aumentar quantidade a mover"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMoveQty(source.quantity)}
+                    className="ml-auto rounded-lg border border-barbie-accent bg-white px-2 py-1 text-xs font-semibold text-barbie-dark hover:bg-barbie-bg-soft"
+                  >
+                    Tudo
+                  </button>
+                </div>
+                <p className="text-xs text-barbie-text/50">
+                  {clampedQty === source.quantity
+                    ? 'Remove completamente este local do produto.'
+                    : `Restarão ${source.quantity - clampedQty} no local atual.`}
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  fullWidth
+                  onClick={closeMoveModal}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  fullWidth
+                  onClick={confirmMove}
+                  disabled={!moveToId}
+                >
+                  Mover
+                </Button>
+              </div>
+            </div>
+          )
+        })()}
+      </Modal>
     </form>
   )
 }
