@@ -96,6 +96,13 @@ services:
       SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:-15MB}
       # Presigned URL TTL
       APP_STORAGE_MINIO_PRESIGNED_URL_TTL: ${APP_STORAGE_MINIO_PRESIGNED_URL_TTL:-60}
+      # Seed users (vazio = no-op; ignorado se usuario ja existe no banco)
+      SEED_USER_1_EMAIL: ${SEED_USER_1_EMAIL:-}
+      SEED_USER_1_PASSWORD: ${SEED_USER_1_PASSWORD:-}
+      SEED_USER_1_NAME: ${SEED_USER_1_NAME:-}
+      SEED_USER_2_EMAIL: ${SEED_USER_2_EMAIL:-}
+      SEED_USER_2_PASSWORD: ${SEED_USER_2_PASSWORD:-}
+      SEED_USER_2_NAME: ${SEED_USER_2_NAME:-}
       # JVM container support flags
       JAVA_TOOL_OPTIONS: >-
         -XX:+UseContainerSupport
