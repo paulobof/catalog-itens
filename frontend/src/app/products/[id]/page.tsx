@@ -45,7 +45,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <div>
       <PageHeader
         title={product.name}
-        useBrowserBack
+        backHref="/"
         backLabel="Voltar"
         actions={
           <Link

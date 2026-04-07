@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils/cn'
 
@@ -34,21 +33,24 @@ export function PageHeader({
   title,
   backHref,
   backLabel = 'Voltar',
-  useBrowserBack = false,
+  useBrowserBack,
   actions,
   className,
 }: PageHeaderProps) {
   const router = useRouter()
+  void useBrowserBack
 
   function handleBack() {
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back()
-    } else if (backHref) {
+      return
+    }
+    if (backHref) {
       router.push(backHref)
     }
   }
 
-  const showBack = useBrowserBack || backHref
+  const showBack = backHref !== undefined || useBrowserBack === true
 
   return (
     <header
@@ -58,24 +60,14 @@ export function PageHeader({
       )}
     >
       {showBack && (
-        useBrowserBack ? (
-          <button
-            type="button"
-            onClick={handleBack}
-            aria-label={backLabel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-2"
-          >
-            <BackArrowIcon />
-          </button>
-        ) : (
-          <Link
-            href={backHref!}
-            aria-label={backLabel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-2"
-          >
-            <BackArrowIcon />
-          </Link>
-        )
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label={backLabel}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-2"
+        >
+          <BackArrowIcon />
+        </button>
       )}
       <h1 className="flex-1 truncate text-lg font-bold text-barbie-text">
         {title}
