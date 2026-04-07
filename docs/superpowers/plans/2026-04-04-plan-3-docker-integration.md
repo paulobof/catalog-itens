@@ -525,24 +525,13 @@ Dockerfile
 ```typescript
 import { NextResponse } from "next/server";
 
-/**
- * GET /api/health
- *
- * Lightweight health check endpoint consumed by the Docker HEALTHCHECK
- * directive in the frontend Dockerfile. Returns HTTP 200 with a JSON body
- * when the Next.js server is ready to handle requests.
- *
- * This endpoint is intentionally minimal — it does NOT call the backend or
- * any database. Its sole purpose is to confirm that the Node.js HTTP server
- * is alive and routing requests correctly.
- */
+
 export async function GET(): Promise<NextResponse> {
   return NextResponse.json(
     { status: "ok" },
     {
       status: 200,
       headers: {
-        // Prevent any caching layer from serving a stale "ok" response
         "Cache-Control": "no-store",
       },
     }

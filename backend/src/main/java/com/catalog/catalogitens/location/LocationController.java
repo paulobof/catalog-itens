@@ -1,5 +1,6 @@
 package com.catalog.catalogitens.location;
 
+import com.catalog.catalogitens.photo.PhotoEntityType;
 import com.catalog.catalogitens.photo.PhotoReorderRequest;
 import com.catalog.catalogitens.photo.PhotoResponse;
 import com.catalog.catalogitens.photo.PhotoService;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/locations")
+@RequestMapping("/api/v1/locations")
 @RequiredArgsConstructor
 @Validated
 public class LocationController {
@@ -59,12 +60,12 @@ public class LocationController {
     public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable UUID id,
                                                       @RequestParam("file") MultipartFile file) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(photoService.upload("location", id, file));
+                .body(photoService.upload(PhotoEntityType.LOCATION.dbValue(), id, file));
     }
 
     @PutMapping("/{id}/photos/reorder")
     public ResponseEntity<List<PhotoResponse>> reorderPhotos(@PathVariable UUID id,
                                                               @Valid @RequestBody PhotoReorderRequest request) {
-        return ResponseEntity.ok(photoService.reorder("location", id, request));
+        return ResponseEntity.ok(photoService.reorder(PhotoEntityType.LOCATION.dbValue(), id, request));
     }
 }

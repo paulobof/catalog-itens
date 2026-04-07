@@ -1,6 +1,7 @@
 package com.catalog.catalogitens.product;
 
 import com.catalog.catalogitens.common.PageResponse;
+import com.catalog.catalogitens.photo.PhotoEntityType;
 import com.catalog.catalogitens.photo.PhotoReorderRequest;
 import com.catalog.catalogitens.photo.PhotoResponse;
 import com.catalog.catalogitens.photo.PhotoService;
@@ -22,7 +23,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 @Validated
 public class ProductController {
@@ -87,12 +88,12 @@ public class ProductController {
     public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable UUID id,
                                                       @RequestParam("file") MultipartFile file) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(photoService.upload("product", id, file));
+                .body(photoService.upload(PhotoEntityType.PRODUCT.dbValue(), id, file));
     }
 
     @PutMapping("/{id}/photos/reorder")
     public ResponseEntity<List<PhotoResponse>> reorderPhotos(@PathVariable UUID id,
                                                               @Valid @RequestBody PhotoReorderRequest request) {
-        return ResponseEntity.ok(photoService.reorder("product", id, request));
+        return ResponseEntity.ok(photoService.reorder(PhotoEntityType.PRODUCT.dbValue(), id, request));
     }
 }

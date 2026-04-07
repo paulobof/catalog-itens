@@ -17,7 +17,7 @@ export function Card({
       className={cn(
         'rounded-2xl bg-barbie-surface shadow-card',
         interactive &&
-          'cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0',
+          'cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-2',
         className,
       )}
     >

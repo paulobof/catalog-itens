@@ -18,10 +18,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -131,8 +133,12 @@ public class PhotoService {
         log.warn("Deleted photo: {}", photoId);
     }
 
+    private static final Set<String> ALLOWED_ENTITY_TYPES = EnumSet.allOf(PhotoEntityType.class).stream()
+            .map(PhotoEntityType::dbValue)
+            .collect(Collectors.toUnmodifiableSet());
+
     private void validateEntityType(String entityType) {
-        if (!Set.of("product", "location", "room").contains(entityType)) {
+        if (!ALLOWED_ENTITY_TYPES.contains(entityType)) {
             throw new InvalidFileException("Invalid entity type: " + entityType);
         }
     }

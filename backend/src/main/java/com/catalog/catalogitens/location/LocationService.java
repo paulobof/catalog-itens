@@ -1,6 +1,7 @@
 package com.catalog.catalogitens.location;
 
 import com.catalog.catalogitens.exception.ResourceNotFoundException;
+import com.catalog.catalogitens.photo.PhotoEntityType;
 import com.catalog.catalogitens.photo.PhotoRepository;
 import com.catalog.catalogitens.photo.PhotoResponse;
 import com.catalog.catalogitens.photo.PhotoService;
@@ -36,7 +37,8 @@ public class LocationService {
                 : locationRepository.findAllActive();
 
         List<UUID> locationIds = locations.stream().map(Location::getId).toList();
-        Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls("location", locationIds);
+        Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls(
+                PhotoEntityType.LOCATION.dbValue(), locationIds);
 
         return locations.stream()
                 .map(loc -> {
@@ -57,7 +59,8 @@ public class LocationService {
         List<UUID> productIds = location.getProductLocations().stream()
                 .map(pl -> pl.getProduct().getId())
                 .toList();
-        Map<UUID, String> productThumbnails = thumbnailService.generateFirstThumbnailUrls("product", productIds);
+        Map<UUID, String> productThumbnails = thumbnailService.generateFirstThumbnailUrls(
+                PhotoEntityType.PRODUCT.dbValue(), productIds);
 
         List<LocationDetailResponse.LocationProductEntry> products = location.getProductLocations().stream()
                 .map(pl -> new LocationDetailResponse.LocationProductEntry(
@@ -68,7 +71,7 @@ public class LocationService {
                 ))
                 .toList();
 
-        List<PhotoResponse> photos = photoService.findByEntity("location", id);
+        List<PhotoResponse> photos = photoService.findByEntity(PhotoEntityType.LOCATION.dbValue(), id);
 
         return new LocationDetailResponse(
                 location.getId(),
@@ -107,7 +110,7 @@ public class LocationService {
         location = locationRepository.save(location);
         log.info("Updated location: {} ({})", location.getName(), location.getId());
         long count = locationRepository.countActiveProductsByLocationId(id);
-        String thumbnailUrl = thumbnailService.generateFirstThumbnailUrl("location", id);
+        String thumbnailUrl = thumbnailService.generateFirstThumbnailUrl(PhotoEntityType.LOCATION.dbValue(), id);
         return LocationSummaryResponse.from(location, count, thumbnailUrl);
     }
 
@@ -118,7 +121,7 @@ public class LocationService {
 
         productLocationRepository.softDeleteByLocationId(id);
 
-        photoRepository.softDeleteAllByEntityTypeAndEntityId("location", id);
+        photoRepository.softDeleteAllByEntityTypeAndEntityId(PhotoEntityType.LOCATION.dbValue(), id);
 
         locationRepository.deleteById(id);
         log.warn("Soft-deleted location: {}", id);

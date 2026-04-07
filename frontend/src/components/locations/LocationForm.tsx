@@ -124,8 +124,10 @@ export function LocationForm({
         'success',
       )
       window.location.href = `/locations/${locationId}`
-    } catch {
-      showToast('Erro ao salvar local. Tente novamente.', 'error')
+    } catch (err) {
+      console.error('Erro ao salvar local:', err)
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar. Tente novamente.'
+      showToast(msg, 'error')
     } finally {
       setSubmitting(false)
     }

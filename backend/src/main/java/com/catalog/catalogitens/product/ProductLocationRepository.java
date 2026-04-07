@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,7 @@ public interface ProductLocationRepository extends JpaRepository<ProductLocation
             @Param("locationId") UUID locationId);
 
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query(value = """
             UPDATE product_location SET deleted_at = now()
             WHERE location_id IN (
@@ -40,11 +42,13 @@ public interface ProductLocationRepository extends JpaRepository<ProductLocation
     int softDeleteByRoomId(@Param("roomId") UUID roomId);
 
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query(value = "UPDATE product_location SET deleted_at = now() WHERE location_id = :locationId AND deleted_at IS NULL",
            nativeQuery = true)
     int softDeleteByLocationId(@Param("locationId") UUID locationId);
 
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query(value = "UPDATE product_location SET deleted_at = now() WHERE product_id = :productId AND deleted_at IS NULL",
            nativeQuery = true)
     int softDeleteByProductId(@Param("productId") UUID productId);

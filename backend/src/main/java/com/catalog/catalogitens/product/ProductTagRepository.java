@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -12,10 +13,12 @@ import java.util.UUID;
 public interface ProductTagRepository extends JpaRepository<ProductTag, ProductTagId> {
 
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query(value = "DELETE FROM product_tag WHERE product_id = :productId", nativeQuery = true)
     void deleteAllByProductId(@Param("productId") UUID productId);
 
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query(value = "DELETE FROM product_tag WHERE tag_id = :tagId", nativeQuery = true)
     void deleteAllByTagId(@Param("tagId") UUID tagId);
 

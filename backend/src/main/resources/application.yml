@@ -58,17 +58,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,loggers
+        include: health,info
       base-path: /actuator
   endpoint:
     health:
-      show-details: when-authorized
-      show-components: always
-    metrics:
-      enabled: true
-  metrics:
-    tags:
-      application: catalog-itens
+      show-details: never
+      show-components: never
   info:
     env:
       enabled: true

@@ -65,29 +65,38 @@ export function PhotoCarousel({ photos, productName }: PhotoCarouselProps) {
       onTouchEnd={handleTouchEnd}
     >
       <div className="relative h-72 bg-barbie-bg-soft">
-        {photos.map((photo, index) => (
-          <div
-            key={photo.id}
-            aria-label={`Foto ${index + 1} de ${total} de ${productName}`}
-            aria-roledescription="slide"
-            aria-hidden={index !== current}
-            className={cn(
-              'absolute inset-0 transition-opacity duration-300',
-              index === current
-                ? 'opacity-100'
-                : 'opacity-0 pointer-events-none',
-            )}
-          >
-            <Image
-              src={photo.url}
-              alt={`${productName} — foto ${index + 1}`}
-              fill
-              priority={index === 0}
-              sizes="100vw"
-              className="object-contain"
-            />
-          </div>
-        ))}
+        {photos.map((photo, index) => {
+          const distance = Math.min(
+            Math.abs(index - current),
+            total - Math.abs(index - current),
+          )
+          const shouldRender = distance <= 1
+          if (!shouldRender) return null
+
+          return (
+            <div
+              key={photo.id}
+              aria-label={`Foto ${index + 1} de ${total} de ${productName}`}
+              aria-roledescription="slide"
+              aria-hidden={index !== current}
+              className={cn(
+                'absolute inset-0 transition-opacity duration-300',
+                index === current
+                  ? 'opacity-100'
+                  : 'opacity-0 pointer-events-none',
+              )}
+            >
+              <Image
+                src={photo.url}
+                alt={`${productName} — foto ${index + 1}`}
+                fill
+                priority={index === 0}
+                sizes="100vw"
+                className="object-contain"
+              />
+            </div>
+          )
+        })}
       </div>
 
       {total > 1 && (

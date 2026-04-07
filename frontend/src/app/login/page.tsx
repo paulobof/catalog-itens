@@ -76,6 +76,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               required
+              aria-required="true"
               autoComplete="email"
               className="rounded-xl border border-barbie-accent bg-white px-4 py-2.5 text-barbie-text placeholder:text-barbie-text/40 focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
             />
@@ -92,6 +93,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
+              aria-required="true"
               autoComplete="current-password"
               className="rounded-xl border border-barbie-accent bg-white px-4 py-2.5 text-barbie-text placeholder:text-barbie-text/40 focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
             />

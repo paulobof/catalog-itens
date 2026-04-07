@@ -12,7 +12,9 @@ import { showToast } from '@/components/ui/Toast'
 import type {
   RoomSummary,
   LocationSummary,
+  LocationDetail,
   ProductSummary,
+  ProductInLocationResponse,
 } from '@/lib/api/types'
 
 type View = 'rooms' | 'locations' | 'products'
@@ -137,20 +139,23 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
           if (loc) setLocationFilter({ id: loc.id, label: loc.name })
 
           const detailRes = await fetch(`/api/locations/${locationIdParam}`)
-          const detail = await detailRes.json()
+          const detail: LocationDetail = await detailRes.json()
           if (cancelled) return
 
-          const productRes = await fetch(`/api/products?roomId=${roomIdParam}&size=50`)
-          const productData = await productRes.json()
-          if (cancelled) return
-
-          const locationProductIds = new Set(
-            detail.products.map((p: { productId: string }) => p.productId),
+          const mapped: ProductSummary[] = (detail.products ?? []).map(
+            (p: ProductInLocationResponse) => ({
+              id: p.productId,
+              name: p.productName,
+              description: null,
+              thumbnailUrl: p.thumbnailUrl,
+              tags: [],
+              locations: [],
+              totalQuantity: p.quantity,
+              createdAt: '',
+              updatedAt: '',
+            }),
           )
-          const filtered = productData.content.filter((p: ProductSummary) =>
-            locationProductIds.has(p.id),
-          )
-          setProducts(filtered)
+          setProducts(mapped)
         } else {
           setLocationFilter(null)
           setProducts([])
@@ -250,65 +255,72 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <nav aria-label="Navegacao do catalogo" className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={clearRoomFilter}
-          aria-label="Voltar para comodos"
-          className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-            view === 'rooms'
-              ? 'bg-barbie-primary text-white'
-              : 'bg-barbie-bg-soft text-barbie-text/60 hover:bg-barbie-accent/20'
-          }`}
-        >
-          Cômodos
-        </button>
-
-        {roomFilter && (
-          <>
-            <ChevronIcon />
+      <nav aria-label="Navegacao do catalogo">
+        <ol className="flex flex-wrap items-center gap-2">
+          <li>
             <button
               type="button"
-              onClick={clearLocationFilter}
-              aria-label={`Ver locais de ${roomFilter.label}`}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                view === 'locations'
+              onClick={clearRoomFilter}
+              aria-label="Voltar para comodos"
+              aria-current={view === 'rooms' ? 'page' : undefined}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                view === 'rooms'
                   ? 'bg-barbie-primary text-white'
-                  : 'bg-barbie-bg-soft text-barbie-text/60 hover:bg-barbie-accent/20'
+                  : 'bg-barbie-bg-soft text-barbie-dark hover:bg-barbie-accent/20'
               }`}
             >
-              {roomFilter.label}
-              {view === 'locations' && (
+              Cômodos
+            </button>
+          </li>
+
+          {roomFilter && (
+            <li className="flex items-center gap-2">
+              <ChevronIcon />
+              <button
+                type="button"
+                onClick={clearLocationFilter}
+                aria-label={`Ver locais de ${roomFilter.label}`}
+                aria-current={view === 'locations' ? 'page' : undefined}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  view === 'locations'
+                    ? 'bg-barbie-primary text-white'
+                    : 'bg-barbie-bg-soft text-barbie-dark hover:bg-barbie-accent/20'
+                }`}
+              >
+                {roomFilter.label}
+                {view === 'locations' && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); clearRoomFilter() }}
+                    className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white/30 hover:bg-white/50"
+                    aria-label={`Remover filtro ${roomFilter.label}`}
+                  >
+                    <CloseIcon />
+                  </span>
+                )}
+              </button>
+            </li>
+          )}
+
+          {locationFilter && (
+            <li className="flex items-center gap-2">
+              <ChevronIcon />
+              <button
+                type="button"
+                aria-current="page"
+                className="flex items-center gap-1.5 rounded-full bg-barbie-primary px-3 py-1.5 text-xs font-semibold text-white"
+              >
+                {locationFilter.label}
                 <span
-                  onClick={(e) => { e.stopPropagation(); clearRoomFilter() }}
-                  className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white/30 hover:bg-white/50"
-                  aria-label={`Remover filtro ${roomFilter.label}`}
+                  onClick={(e) => { e.stopPropagation(); clearLocationFilter() }}
+                  className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white/30 hover:bg-white/50 cursor-pointer"
+                  aria-label={`Remover filtro ${locationFilter.label}`}
                 >
                   <CloseIcon />
                 </span>
-              )}
-            </button>
-          </>
-        )}
-
-        {locationFilter && (
-          <>
-            <ChevronIcon />
-            <button
-              type="button"
-              className="flex items-center gap-1.5 rounded-full bg-barbie-primary px-3 py-1.5 text-xs font-semibold text-white"
-            >
-              {locationFilter.label}
-              <span
-                onClick={(e) => { e.stopPropagation(); clearLocationFilter() }}
-                className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white/30 hover:bg-white/50 cursor-pointer"
-                aria-label={`Remover filtro ${locationFilter.label}`}
-              >
-                <CloseIcon />
-              </span>
-            </button>
-          </>
-        )}
+              </button>
+            </li>
+          )}
+        </ol>
       </nav>
 
       <div className="relative">
@@ -400,7 +412,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <CardBody>
                       <h3 className="truncate font-bold text-barbie-text text-sm">{room.name}</h3>
                       {room.description && (
-                        <p className="mt-0.5 truncate text-xs text-barbie-text/60">{room.description}</p>
+                        <p className="mt-0.5 truncate text-xs text-barbie-text/80">{room.description}</p>
                       )}
                       <p className="mt-1.5 text-xs text-barbie-dark">
                         {room.locationCount} local{room.locationCount !== 1 ? 'is' : ''} · {room.productCount} item{room.productCount !== 1 ? 's' : ''}
@@ -471,7 +483,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <CardBody>
                       <h3 className="truncate font-bold text-barbie-text text-sm">{loc.name}</h3>
                       {loc.description && (
-                        <p className="mt-0.5 truncate text-xs text-barbie-text/60">{loc.description}</p>
+                        <p className="mt-0.5 truncate text-xs text-barbie-text/80">{loc.description}</p>
                       )}
                       <p className="mt-1.5 text-xs text-barbie-dark">
                         {loc.productCount} item{loc.productCount !== 1 ? 's' : ''}
@@ -542,7 +554,7 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                     <CardBody className="pt-3">
                       <h3 className="truncate font-bold text-barbie-text text-sm">{product.name}</h3>
                       {product.description && (
-                        <p className="mt-0.5 line-clamp-2 text-xs text-barbie-text/60">{product.description}</p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-barbie-text/80">{product.description}</p>
                       )}
                       {product.tags.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
@@ -602,7 +614,7 @@ function EmptyState({
   return (
     <div className="flex flex-col items-center gap-4 py-16 text-center">
       <span className="text-5xl" aria-hidden="true">{emoji}</span>
-      <p className="text-barbie-text/60">{message}</p>
+      <p className="text-barbie-text/80">{message}</p>
       <Link
         href={href}
         aria-label={cta}

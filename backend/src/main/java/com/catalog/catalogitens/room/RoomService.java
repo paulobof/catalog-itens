@@ -4,6 +4,7 @@ import com.catalog.catalogitens.exception.ResourceNotFoundException;
 import com.catalog.catalogitens.location.Location;
 import com.catalog.catalogitens.location.LocationRepository;
 import com.catalog.catalogitens.location.LocationSummaryResponse;
+import com.catalog.catalogitens.photo.PhotoEntityType;
 import com.catalog.catalogitens.photo.PhotoRepository;
 import com.catalog.catalogitens.photo.PhotoResponse;
 import com.catalog.catalogitens.photo.PhotoService;
@@ -34,7 +35,8 @@ public class RoomService {
     public List<RoomSummaryResponse> findAll() {
         List<Room> rooms = roomRepository.findAllActive();
         List<UUID> roomIds = rooms.stream().map(Room::getId).toList();
-        Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls("room", roomIds);
+        Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls(
+                PhotoEntityType.ROOM.dbValue(), roomIds);
 
         return rooms.stream()
                 .map(room -> {
@@ -57,12 +59,13 @@ public class RoomService {
         List<LocationSummaryResponse> locationResponses = room.getLocations().stream()
                 .map(loc -> {
                     long pCount = locationRepository.countActiveProductsByLocationId(loc.getId());
-                    String locThumb = thumbnailService.generateFirstThumbnailUrl("location", loc.getId());
+                    String locThumb = thumbnailService.generateFirstThumbnailUrl(
+                            PhotoEntityType.LOCATION.dbValue(), loc.getId());
                     return LocationSummaryResponse.from(loc, pCount, locThumb);
                 })
                 .toList();
 
-        List<PhotoResponse> photos = photoService.findByEntity("room", id);
+        List<PhotoResponse> photos = photoService.findByEntity(PhotoEntityType.ROOM.dbValue(), id);
 
         return new RoomDetailResponse(
                 room.getId(),
@@ -97,7 +100,7 @@ public class RoomService {
         log.info("Updated room: {} ({})", room.getName(), room.getId());
         long locCount = roomRepository.countActiveLocationsByRoomId(id);
         long prodCount = roomRepository.countActiveProductsByRoomId(id);
-        String thumbnailUrl = thumbnailService.generateFirstThumbnailUrl("room", id);
+        String thumbnailUrl = thumbnailService.generateFirstThumbnailUrl(PhotoEntityType.ROOM.dbValue(), id);
         return RoomSummaryResponse.from(room, locCount, prodCount, thumbnailUrl);
     }
 
@@ -110,12 +113,13 @@ public class RoomService {
 
         List<Location> locations = locationRepository.findAllByRoomId(id);
         for (Location loc : locations) {
-            photoRepository.softDeleteAllByEntityTypeAndEntityId("location", loc.getId());
+            photoRepository.softDeleteAllByEntityTypeAndEntityId(
+                    PhotoEntityType.LOCATION.dbValue(), loc.getId());
         }
 
         locationRepository.softDeleteByRoomId(id);
 
-        photoRepository.softDeleteAllByEntityTypeAndEntityId("room", id);
+        photoRepository.softDeleteAllByEntityTypeAndEntityId(PhotoEntityType.ROOM.dbValue(), id);
 
         roomRepository.deleteById(id);
         log.warn("Soft-deleted room: {}", id);

@@ -23,6 +23,7 @@ if echo "$STAGED_FILES" | grep -q "^backend/"; then
     echo "Running backend checks..."
     cd backend
     ./mvnw compile -q || { echo "Backend compilation failed"; exit 1; }
+    ./mvnw test -q -Dtest='AuthServiceTest,PhotoServiceTest,LoginRateLimiterTest' || { echo "Backend tests failed"; exit 1; }
     cd ..
     echo "Backend checks passed"
   else

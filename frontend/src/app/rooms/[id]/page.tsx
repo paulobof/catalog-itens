@@ -8,7 +8,7 @@ import { LocationCard } from '@/components/locations/LocationCard'
 import { ApiError } from '@/lib/api/client'
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface RoomPageProps {
   params: Promise<{ id: string }>

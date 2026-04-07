@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/tags")
+@RequestMapping("/api/v1/tags")
 @RequiredArgsConstructor
 @Validated
 public class TagController {

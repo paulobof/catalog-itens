@@ -5,12 +5,12 @@ import com.catalog.catalogitens.exception.ResourceNotFoundException;
 import com.catalog.catalogitens.location.Location;
 import com.catalog.catalogitens.location.LocationRepository;
 import com.catalog.catalogitens.photo.Photo;
+import com.catalog.catalogitens.photo.PhotoEntityType;
 import com.catalog.catalogitens.photo.PhotoRepository;
 import com.catalog.catalogitens.photo.StorageService;
 import com.catalog.catalogitens.photo.ThumbnailService;
 import com.catalog.catalogitens.tag.Tag;
 import com.catalog.catalogitens.tag.TagRepository;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,7 +37,6 @@ public class ProductService {
     private final PhotoRepository photoRepository;
     private final StorageService storageService;
     private final ThumbnailService thumbnailService;
-    private final EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public PageResponse<ProductSummaryResponse> search(String q, UUID roomId, UUID tagId,
@@ -49,7 +48,8 @@ public class ProductService {
         Page<Product> products = productRepository.searchProducts(searchQuery, roomId, tagId, pageable);
 
         Page<ProductSummaryResponse> responses = products.map(product -> {
-            List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId("product", product.getId());
+            List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(
+                    PhotoEntityType.PRODUCT.dbValue(), product.getId());
             String thumbnailUrl = photos.isEmpty() ? null
                     : thumbnailService.generateThumbnailUrl(photos.getFirst().getObjectKey());
 
@@ -83,7 +83,8 @@ public class ProductService {
         Product product = productRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
 
-        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId("product", id);
+        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(
+                PhotoEntityType.PRODUCT.dbValue(), id);
 
         List<ProductDetailResponse.TagEntry> tags = product.getProductTags().stream()
                 .map(pt -> new ProductDetailResponse.TagEntry(
@@ -133,7 +134,8 @@ public class ProductService {
                 ProductTag pt = new ProductTag();
                 pt.setProduct(product);
                 pt.setTag(tag);
-                productTagRepository.save(pt);
+                pt = productTagRepository.save(pt);
+                product.getProductTags().add(pt);
             }
         }
 
@@ -145,13 +147,12 @@ public class ProductService {
                 pl.setProduct(product);
                 pl.setLocation(location);
                 pl.setQuantity(entry.quantity() > 0 ? entry.quantity() : 1);
-                productLocationRepository.save(pl);
+                pl = productLocationRepository.save(pl);
+                product.getProductLocations().add(pl);
             }
         }
 
         log.info("Created product: {} ({})", product.getName(), product.getId());
-        entityManager.flush();
-        entityManager.clear();
         return findById(product.getId());
     }
 
@@ -188,7 +189,8 @@ public class ProductService {
         productLocationRepository.softDeleteByProductId(id);
         productTagRepository.deleteAllByProductId(id);
 
-        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId("product", id);
+        List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(
+                PhotoEntityType.PRODUCT.dbValue(), id);
         for (Photo photo : photos) {
             try {
                 storageService.delete(photo.getObjectKey());
@@ -198,7 +200,7 @@ public class ProductService {
                 log.error("Failed to delete photo from storage: {}", photo.getObjectKey(), e);
             }
         }
-        photoRepository.softDeleteAllByEntityTypeAndEntityId("product", id);
+        photoRepository.softDeleteAllByEntityTypeAndEntityId(PhotoEntityType.PRODUCT.dbValue(), id);
 
         productRepository.deleteById(id);
         log.warn("Soft-deleted product: {}", id);

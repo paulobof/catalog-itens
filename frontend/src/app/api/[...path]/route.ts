@@ -16,7 +16,7 @@ async function proxyRequest(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const targetUrl = `${BACKEND_URL}/api/${path}${
+  const targetUrl = `${BACKEND_URL}/api/v1/${path}${
     request.nextUrl.search ? request.nextUrl.search : ''
   }`
 

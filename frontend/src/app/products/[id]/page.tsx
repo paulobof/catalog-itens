@@ -7,7 +7,7 @@ import { PhotoCarousel } from '@/components/photos/PhotoCarousel'
 import { ApiError } from '@/lib/api/client'
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface ProductPageProps {
   params: Promise<{ id: string }>

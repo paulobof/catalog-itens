@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   let backendRes: Response
   try {
-    backendRes = await fetch(`${API_URL}/api/auth/login`, {
+    backendRes = await fetch(`${API_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

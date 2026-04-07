@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserSeeder implements ApplicationRunner {
 
     private final AppUserRepository userRepository;
+    private final AuthService authService;
     private final Environment env;
 
     @Override
@@ -40,7 +41,7 @@ public class UserSeeder implements ApplicationRunner {
 
         AppUser user = new AppUser();
         user.setEmail(email);
-        user.setPassword(AuthService.hashPassword(password));
+        user.setPassword(authService.hashPassword(password));
         user.setName(name != null ? name : email);
         userRepository.save(user);
         log.info("Usuário criado: {} ({})", user.getName(), email);

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,7 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     Optional<Location> findWithProductsById(@Param("id") UUID id);
 
     @Modifying(clearAutomatically = true)
+    @Transactional
     @Query(value = "UPDATE location SET deleted_at = now() WHERE room_id = :roomId AND deleted_at IS NULL",
            nativeQuery = true)
     int softDeleteByRoomId(@Param("roomId") UUID roomId);

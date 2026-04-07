@@ -63,7 +63,7 @@ export function PageHeader({
             type="button"
             onClick={handleBack}
             aria-label={backLabel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-2"
           >
             <BackArrowIcon />
           </button>
@@ -71,7 +71,7 @@ export function PageHeader({
           <Link
             href={backHref!}
             aria-label={backLabel}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-barbie-dark transition-colors hover:bg-barbie-bg-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-2"
           >
             <BackArrowIcon />
           </Link>

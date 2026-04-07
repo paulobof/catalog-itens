@@ -208,8 +208,10 @@ export function ProductForm({
         'success',
       )
       window.location.href = `/products/${productId}`
-    } catch {
-      showToast('Erro ao salvar produto. Tente novamente.', 'error')
+    } catch (err) {
+      console.error('Erro ao salvar produto:', err)
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar. Tente novamente.'
+      showToast(msg, 'error')
     } finally {
       setSubmitting(false)
     }

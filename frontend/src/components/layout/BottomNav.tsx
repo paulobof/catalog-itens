@@ -99,10 +99,10 @@ export function BottomNav({ activePath }: BottomNavProps) {
                 href={item.href}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'flex h-full flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors',
+                  'flex h-full flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-[-2px]',
                   isActive
                     ? 'text-barbie-primary'
-                    : 'text-barbie-text/50 hover:text-barbie-dark',
+                    : 'text-barbie-dark hover:text-barbie-primary',
                 )}
               >
                 <span

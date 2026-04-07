@@ -11,17 +11,18 @@ import java.util.Optional;
 @Service
 public class AuthService {
 
-    private static final BCryptPasswordEncoder ENCODER = new BCryptPasswordEncoder(12);
-
     private static final String DUMMY_HASH =
             "$2a$12$CwTycUXWue0Thq9StjUM0uJ8p8hY0Jv9tN4DYvWWKkOJPVbZH8yCW";
 
     private final AppUserRepository userRepository;
+    private final BCryptPasswordEncoder encoder;
     private final String pepper;
 
     public AuthService(AppUserRepository userRepository,
+                       BCryptPasswordEncoder encoder,
                        @Value("${app.auth.pepper:pepper2}") String pepper) {
         this.userRepository = userRepository;
+        this.encoder = encoder;
         this.pepper = pepper;
     }
 
@@ -32,7 +33,7 @@ public class AuthService {
         Optional<AppUser> userOpt = userRepository.findByEmail(normalizedEmail);
 
         String hashToCheck = userOpt.map(AppUser::getPassword).orElse(DUMMY_HASH);
-        boolean matches = ENCODER.matches(password + pepper, hashToCheck);
+        boolean matches = encoder.matches(password + pepper, hashToCheck);
 
         if (userOpt.isEmpty() || !matches) {
             log.warn("Login falhou");
@@ -45,11 +46,7 @@ public class AuthService {
                 user.getId().toString(), user.getEmail(), user.getName()));
     }
 
-    public static String hashPassword(String rawPassword) {
-        String pepper = System.getenv("APP_AUTH_PEPPER");
-        if (pepper == null || pepper.isBlank()) {
-            pepper = "pepper2";
-        }
-        return ENCODER.encode(rawPassword + pepper);
+    public String hashPassword(String rawPassword) {
+        return encoder.encode(rawPassword + pepper);
     }
 }

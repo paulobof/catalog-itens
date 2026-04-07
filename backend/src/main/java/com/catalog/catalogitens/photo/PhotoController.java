@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/photos")
+@RequestMapping("/api/v1/photos")
 @RequiredArgsConstructor
 public class PhotoController {
 

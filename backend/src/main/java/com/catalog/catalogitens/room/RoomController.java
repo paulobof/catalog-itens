@@ -1,5 +1,6 @@
 package com.catalog.catalogitens.room;
 
+import com.catalog.catalogitens.photo.PhotoEntityType;
 import com.catalog.catalogitens.photo.PhotoReorderRequest;
 import com.catalog.catalogitens.photo.PhotoResponse;
 import com.catalog.catalogitens.photo.PhotoService;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/rooms")
+@RequestMapping("/api/v1/rooms")
 @RequiredArgsConstructor
 @Validated
 public class RoomController {
@@ -57,12 +58,12 @@ public class RoomController {
     public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable UUID id,
                                                       @RequestParam("file") MultipartFile file) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(photoService.upload("room", id, file));
+                .body(photoService.upload(PhotoEntityType.ROOM.dbValue(), id, file));
     }
 
     @PutMapping("/{id}/photos/reorder")
     public ResponseEntity<List<PhotoResponse>> reorderPhotos(@PathVariable UUID id,
                                                               @Valid @RequestBody PhotoReorderRequest request) {
-        return ResponseEntity.ok(photoService.reorder("room", id, request));
+        return ResponseEntity.ok(photoService.reorder(PhotoEntityType.ROOM.dbValue(), id, request));
     }
 }

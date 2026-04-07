@@ -207,71 +207,67 @@ Para bypass: `git commit --no-verify` (não recomendado).
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| POST | `/api/auth/login` | Login com `{email, password}` |
+| POST | `/api/v1/auth/login` | Login com `{email, password}` |
 | POST | `/api/auth/logout` | Limpa cookie de sessão (frontend) |
 
 ### Cômodos
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET    | `/api/rooms` | Lista cômodos com `thumbnailUrl` |
-| GET    | `/api/rooms/{id}` | Detalhe + locais + fotos |
-| POST   | `/api/rooms` | Cria cômodo |
-| PUT    | `/api/rooms/{id}` | Atualiza cômodo |
-| DELETE | `/api/rooms/{id}` | Soft-delete (cascata: locais, fotos) |
-| POST   | `/api/rooms/{id}/photos` | Upload de foto (multipart) |
-| PUT    | `/api/rooms/{id}/photos/reorder` | Reordena fotos |
+| GET    | `/api/v1/rooms` | Lista cômodos com `thumbnailUrl` |
+| GET    | `/api/v1/rooms/{id}` | Detalhe + locais + fotos |
+| POST   | `/api/v1/rooms` | Cria cômodo |
+| PUT    | `/api/v1/rooms/{id}` | Atualiza cômodo |
+| DELETE | `/api/v1/rooms/{id}` | Soft-delete (cascata: locais, fotos) |
+| POST   | `/api/v1/rooms/{id}/photos` | Upload de foto (multipart) |
+| PUT    | `/api/v1/rooms/{id}/photos/reorder` | Reordena fotos |
 
 ### Locais
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET    | `/api/locations?roomId=...` | Lista locais (filtrável por cômodo) |
-| GET    | `/api/locations/{id}` | Detalhe + produtos com thumbnail + fotos |
-| POST   | `/api/locations` | Cria local |
-| PUT    | `/api/locations/{id}` | Atualiza local |
-| DELETE | `/api/locations/{id}` | Soft-delete (cascata: fotos) |
-| POST   | `/api/locations/{id}/photos` | Upload de foto |
-| PUT    | `/api/locations/{id}/photos/reorder` | Reordena fotos |
+| GET    | `/api/v1/locations?roomId=...` | Lista locais (filtrável por cômodo) |
+| GET    | `/api/v1/locations/{id}` | Detalhe + produtos com thumbnail + fotos |
+| POST   | `/api/v1/locations` | Cria local |
+| PUT    | `/api/v1/locations/{id}` | Atualiza local |
+| DELETE | `/api/v1/locations/{id}` | Soft-delete (cascata: fotos) |
+| POST   | `/api/v1/locations/{id}/photos` | Upload de foto |
+| PUT    | `/api/v1/locations/{id}/photos/reorder` | Reordena fotos |
 
 ### Produtos
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET    | `/api/products?q=&roomId=&tagId=&page=&size=` | Lista paginada com busca full-text |
-| GET    | `/api/products/{id}` | Detalhe + locais + tags + fotos |
-| POST   | `/api/products` | Cria produto (com tags e locais) |
-| PUT    | `/api/products/{id}` | Atualiza produto |
-| DELETE | `/api/products/{id}` | Soft-delete + remove fotos do MinIO |
-| POST   | `/api/products/{id}/photos` | Upload de foto |
-| PUT    | `/api/products/{id}/photos/reorder` | Reordena fotos |
+| GET    | `/api/v1/products?q=&roomId=&tagId=&page=&size=` | Lista paginada com busca full-text |
+| GET    | `/api/v1/products/{id}` | Detalhe + locais + tags + fotos |
+| POST   | `/api/v1/products` | Cria produto (com tags e locais) |
+| PUT    | `/api/v1/products/{id}` | Atualiza produto |
+| DELETE | `/api/v1/products/{id}` | Soft-delete + remove fotos do MinIO |
+| POST   | `/api/v1/products/{id}/photos` | Upload de foto |
+| PUT    | `/api/v1/products/{id}/photos/reorder` | Reordena fotos |
 
 ### Tags
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| GET    | `/api/tags` | Lista tags |
-| POST   | `/api/tags` | Cria tag |
-| PUT    | `/api/tags/{id}` | Atualiza tag |
-| DELETE | `/api/tags/{id}` | Soft-delete |
+| GET    | `/api/v1/tags` | Lista tags |
+| POST   | `/api/v1/tags` | Cria tag |
+| PUT    | `/api/v1/tags/{id}` | Atualiza tag |
+| DELETE | `/api/v1/tags/{id}` | Soft-delete |
 
 ### Fotos
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
-| DELETE | `/api/photos/{id}` | Soft-delete + remove do MinIO |
+| DELETE | `/api/v1/photos/{id}` | Soft-delete + remove do MinIO |
 
 ### Health & Observabilidade
 
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET    | `/api/health` | Frontend health (Next.js, sem proxy) |
-| GET    | `/actuator/health` | Backend health |
+| GET    | `/actuator/health` | Backend health (sem detalhes) |
 | GET    | `/actuator/info` | Versão e info do app |
-| GET    | `/actuator/metrics` | Lista de métricas |
-| GET    | `/actuator/metrics/{nome}` | Valor de uma métrica |
-| GET    | `/actuator/prometheus` | Métricas em formato Prometheus |
-| GET    | `/actuator/loggers` | Ajusta log levels em runtime |
 
 ---
 
@@ -282,8 +278,7 @@ Para bypass: `git commit --no-verify` (não recomendado).
 - **Logs estruturados** com `requestId` correlacionado via MDC (header `X-Request-Id`)
 - **`RequestLoggingFilter`** loga todo request com método, path, status e duração
 - **`AuthService`** loga cada tentativa de login (sucesso, usuário inexistente, senha incorreta)
-- **Spring Actuator** expõe `/health`, `/info`, `/metrics`, `/prometheus`, `/loggers`
-- **Micrometer + Prometheus** prontos para conectar Grafana
+- **Spring Actuator** expõe apenas `/health` e `/info` (hardening — metrics/prometheus/loggers desabilitados em produção)
 - **Log level DEBUG** no pacote `com.catalog`
 - **Health checks no Docker Compose** (postgres, minio, backend)
 

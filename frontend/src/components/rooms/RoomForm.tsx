@@ -113,8 +113,10 @@ export function RoomForm({ room, existingPhotos }: RoomFormProps) {
         'success',
       )
       window.location.href = `/rooms/${roomId}`
-    } catch {
-      showToast('Erro ao salvar cômodo. Tente novamente.', 'error')
+    } catch (err) {
+      console.error('Erro ao salvar cômodo:', err)
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar. Tente novamente.'
+      showToast(msg, 'error')
     } finally {
       setSubmitting(false)
     }

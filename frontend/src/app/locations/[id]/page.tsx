@@ -9,7 +9,7 @@ import { Card, CardBody } from '@/components/ui/Card'
 import { ApiError } from '@/lib/api/client'
 import type { Metadata } from 'next'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 interface LocationPageProps {
   params: Promise<{ id: string }>

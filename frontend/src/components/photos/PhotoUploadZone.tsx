@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils/cn'
 
@@ -46,25 +46,49 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
   const [dragging, setDragging] = useState(false)
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const blobUrlsRef = useRef<string[]>([])
+  const [selectedForMove, setSelectedForMove] = useState<number | null>(null)
+  const slotRefs = useRef<Array<HTMLDivElement | null>>([])
 
-  const previewUrls = slots.map((slot) => {
-    if (slot.existingUrl) return slot.existingUrl
-    if (slot.file) {
-      const url = URL.createObjectURL(slot.file)
-      blobUrlsRef.current.push(url)
-      return url
+  // Cache blob URLs keyed on the File reference so we only create one per file.
+  const blobUrlCacheRef = useRef<Map<File, string>>(new Map())
+
+  const previewUrls = useMemo(() => {
+    const cache = blobUrlCacheRef.current
+    const stillReferenced = new Set<File>()
+    const urls = slots.map((slot) => {
+      if (slot.existingUrl) return slot.existingUrl
+      if (slot.file) {
+        stillReferenced.add(slot.file)
+        let url = cache.get(slot.file)
+        if (!url) {
+          url = URL.createObjectURL(slot.file)
+          cache.set(slot.file, url)
+        }
+        return url
+      }
+      return null
+    })
+
+    // Revoke URLs for files that are no longer present in any slot.
+    for (const [file, url] of cache.entries()) {
+      if (!stillReferenced.has(file)) {
+        URL.revokeObjectURL(url)
+        cache.delete(file)
+      }
     }
-    return null
-  })
+
+    return urls
+  }, [slots])
 
   useEffect(() => {
-    const urls = blobUrlsRef.current
+    const cache = blobUrlCacheRef.current
     return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url))
-      blobUrlsRef.current = []
+      for (const url of cache.values()) {
+        URL.revokeObjectURL(url)
+      }
+      cache.clear()
     }
-  }, [slots])
+  }, [])
 
   const activeSlots = slots.filter(
     (s) => s.file !== null || s.existingId !== null,
@@ -165,15 +189,66 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
     e.stopPropagation()
     const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10)
     if (fromIndex === toIndex) return
+    swapSlots(fromIndex, toIndex)
+    setDragOverSlot(null)
+  }
+
+  function swapSlots(fromIndex: number, toIndex: number) {
+    if (
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= slots.length ||
+      toIndex >= slots.length ||
+      fromIndex === toIndex
+    ) {
+      return
+    }
     const newSlots = [...slots]
     const from = newSlots[fromIndex]
     const to = newSlots[toIndex]
     if (from !== undefined && to !== undefined) {
       newSlots[fromIndex] = to
       newSlots[toIndex] = from
+      onChange(newSlots)
     }
-    onChange(newSlots)
-    setDragOverSlot(null)
+  }
+
+  function handleSlotKeyDown(e: React.KeyboardEvent, index: number) {
+    const slot = slots[index]
+    const isEmpty = !slot || (slot.file === null && slot.existingId === null)
+    if (isEmpty) return
+
+    const moveLeft = () => {
+      const target = index - 1
+      if (target < 0) return
+      swapSlots(index, target)
+      setSelectedForMove(null)
+      requestAnimationFrame(() => slotRefs.current[target]?.focus())
+    }
+
+    const moveRight = () => {
+      const target = index + 1
+      if (target >= slots.length) return
+      swapSlots(index, target)
+      setSelectedForMove(null)
+      requestAnimationFrame(() => slotRefs.current[target]?.focus())
+    }
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      e.stopPropagation()
+      moveLeft()
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault()
+      e.stopPropagation()
+      moveRight()
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault()
+      e.stopPropagation()
+      setSelectedForMove((prev) => (prev === index ? null : index))
+    } else if (e.key === 'Escape') {
+      setSelectedForMove(null)
+    }
   }
 
   const displayError = error ?? validationError
@@ -209,10 +284,16 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
         {slots.map((slot, index) => {
           const isEmpty = slot.file === null && slot.existingId === null
           const previewUrl = previewUrls[index] ?? null
+          const isSelectedForMove = selectedForMove === index
 
           return (
             <div
               key={index}
+              ref={(el) => {
+                slotRefs.current[index] = el
+              }}
+              role="group"
+              tabIndex={isEmpty ? -1 : 0}
               draggable={!isEmpty}
               onDragStart={(e) => !isEmpty && handleSlotDragStart(e, index)}
               onDragOver={(e) => {
@@ -221,19 +302,25 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
               }}
               onDragLeave={() => setDragOverSlot(null)}
               onDrop={(e) => !isEmpty && handleSlotDrop(e, index)}
+              onKeyDown={(e) => handleSlotKeyDown(e, index)}
+              onClick={(e) => e.stopPropagation()}
               aria-label={
                 isEmpty
                   ? `Slot ${index + 1} de foto — vazio`
-                  : `Slot ${index + 1} de foto — ${slot.file?.name ?? 'foto existente'}. Arraste para reordenar.`
+                  : `Slot ${index + 1} de ${slots.length} — ${slot.file?.name ?? 'foto existente'}.${
+                      isSelectedForMove ? ' Selecionado para mover.' : ''
+                    } Use as setas para reordenar, Espaço ou Enter para selecionar.`
               }
+              aria-grabbed={isSelectedForMove || undefined}
               className={cn(
-                'relative aspect-square overflow-hidden rounded-xl border',
+                'relative aspect-square overflow-hidden rounded-xl border focus-visible:outline focus-visible:outline-2 focus-visible:outline-barbie-primary focus-visible:outline-offset-2',
                 isEmpty
                   ? 'border-barbie-accent/50 bg-barbie-bg-soft flex items-center justify-center'
                   : 'border-barbie-accent cursor-grab active:cursor-grabbing',
                 dragOverSlot === index &&
                   !isEmpty &&
                   'ring-2 ring-barbie-primary',
+                isSelectedForMove && 'ring-2 ring-barbie-primary ring-offset-2',
               )}
             >
               {isEmpty ? (
@@ -350,8 +437,9 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
         </p>
       )}
 
-      <p className="text-xs text-barbie-text/50">
-        JPEG, PNG ou WebP. Máximo 5MB por foto. Arraste para reordenar.
+      <p className="text-xs text-barbie-text/80">
+        JPEG, PNG ou WebP. Máximo 5MB por foto. Arraste para reordenar ou use as
+        setas do teclado quando uma foto estiver focada.
       </p>
     </div>
   )
