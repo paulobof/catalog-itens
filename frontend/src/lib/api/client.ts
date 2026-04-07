@@ -19,11 +19,16 @@ export class ApiError extends Error {
   }
 }
 
-function getBaseUrl(): string {
-  if (typeof window === 'undefined') {
-    return process.env.API_URL ?? 'http://localhost:8080'
+function resolveUrl(path: string): string {
+  if (typeof window !== 'undefined') {
+    return path
   }
-  return ''
+  const base = process.env.API_URL ?? 'http://localhost:8080'
+  const normalized =
+    path.startsWith('/api/') && !path.startsWith('/api/v1/')
+      ? path.replace(/^\/api\//, '/api/v1/')
+      : path
+  return `${base}${normalized}`
 }
 
 function generateRequestId(): string {
@@ -54,7 +59,7 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const { params, ...fetchInit } = options
 
-  let url = `${getBaseUrl()}${path}`
+  let url = resolveUrl(path)
 
   if (params) {
     const qs = new URLSearchParams()
