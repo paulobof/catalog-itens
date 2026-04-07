@@ -190,8 +190,8 @@ public class ProductService {
         return findById(id);
     }
 
-    private void syncProductLocations(Product product,
-                                      List<UpdateProductRequest.ProductLocationEntry> desired) {
+    void syncProductLocations(Product product,
+                              List<UpdateProductRequest.ProductLocationEntry> desired) {
         List<ProductLocation> current = productLocationRepository.findActiveByProductId(product.getId());
 
         Map<UUID, ProductLocation> currentByLocation = new HashMap<>();
