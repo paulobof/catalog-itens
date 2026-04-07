@@ -225,9 +225,9 @@ export function ProductForm({
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex flex-col gap-6 pb-10"
+      className="flex min-w-0 flex-col gap-6 pb-10"
     >
-      <fieldset className="flex flex-col gap-4">
+      <fieldset className="flex min-w-0 flex-col gap-4">
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Informações básicas
         </legend>
@@ -250,14 +250,14 @@ export function ProductForm({
         />
       </fieldset>
 
-      <fieldset>
+      <fieldset className="min-w-0">
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Fotos
         </legend>
         <PhotoUploadZone slots={photoSlots} onChange={setPhotoSlots} onDeleteExisting={(id) => deletePhoto(id).catch(() => {})} />
       </fieldset>
 
-      <fieldset>
+      <fieldset className="min-w-0">
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Tags
         </legend>
@@ -270,17 +270,17 @@ export function ProductForm({
         />
       </fieldset>
 
-      <fieldset>
+      <fieldset className="min-w-0">
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Locais de armazenamento
         </legend>
 
         {locationEntries.length > 0 && (
-          <ul className="mb-3 flex flex-col gap-2">
+          <ul className="mb-3 flex min-w-0 flex-col gap-2">
             {locationEntries.map((entry) => (
               <li
                 key={entry.locationId}
-                className="flex items-center gap-3 rounded-xl border border-barbie-accent/30 bg-barbie-surface px-3 py-2"
+                className="flex min-w-0 items-center gap-2 rounded-xl border border-barbie-accent/30 bg-barbie-surface px-3 py-2"
               >
                 <div className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-barbie-text">
@@ -290,7 +290,7 @@ export function ProductForm({
                     {entry.roomName}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-1">
                   <label
                     htmlFor={`qty-${entry.locationId}`}
                     className="sr-only"
@@ -300,6 +300,7 @@ export function ProductForm({
                   <input
                     id={`qty-${entry.locationId}`}
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={99999}
                     value={entry.quantity}
@@ -309,7 +310,7 @@ export function ProductForm({
                         Math.max(1, parseInt(e.target.value, 10) || 1),
                       )
                     }
-                    className="w-16 rounded-lg border border-barbie-accent bg-white px-2 py-1 text-center text-sm focus:border-barbie-primary focus:outline-none focus:ring-1 focus:ring-barbie-primary/30"
+                    className="w-14 rounded-lg border border-barbie-accent bg-white px-1 py-1 text-center text-sm focus:border-barbie-primary focus:outline-none focus:ring-1 focus:ring-barbie-primary/30"
                   />
                   <button
                     type="button"
@@ -326,7 +327,7 @@ export function ProductForm({
         )}
 
         {availableLocations.length > 0 && (
-          <div className="flex gap-2">
+          <div className="flex min-w-0 gap-2">
             <label htmlFor="location-select" className="sr-only">
               Selecionar local
             </label>
@@ -334,7 +335,7 @@ export function ProductForm({
               id="location-select"
               value={selectedLocationId}
               onChange={(e) => setSelectedLocationId(e.target.value)}
-              className="flex-1 rounded-xl border border-barbie-accent bg-white px-3 py-2 text-sm text-barbie-text focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
+              className="min-w-0 flex-1 rounded-xl border border-barbie-accent bg-white px-3 py-2 text-sm text-barbie-text focus:border-barbie-primary focus:outline-none focus:ring-2 focus:ring-barbie-primary/30"
             >
               <option value="">Adicionar local...</option>
               {availableLocations.map((loc) => (
