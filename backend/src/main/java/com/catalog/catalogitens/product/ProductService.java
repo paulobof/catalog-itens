@@ -19,8 +19,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -179,8 +182,50 @@ public class ProductService {
             }
         }
 
+        if (request.locations() != null) {
+            syncProductLocations(product, request.locations());
+        }
+
         log.info("Updated product: {} ({})", product.getName(), product.getId());
         return findById(id);
+    }
+
+    private void syncProductLocations(Product product,
+                                      List<UpdateProductRequest.ProductLocationEntry> desired) {
+        List<ProductLocation> current = productLocationRepository.findActiveByProductId(product.getId());
+
+        Map<UUID, ProductLocation> currentByLocation = new HashMap<>();
+        for (ProductLocation pl : current) {
+            currentByLocation.put(pl.getLocation().getId(), pl);
+        }
+
+        Set<UUID> desiredIds = new HashSet<>();
+        for (UpdateProductRequest.ProductLocationEntry entry : desired) {
+            desiredIds.add(entry.locationId());
+
+            ProductLocation existing = currentByLocation.get(entry.locationId());
+            if (existing != null) {
+                if (existing.getQuantity() != entry.quantity()) {
+                    existing.setQuantity(entry.quantity());
+                    productLocationRepository.save(existing);
+                }
+                continue;
+            }
+
+            Location location = locationRepository.findById(entry.locationId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Location", entry.locationId()));
+            ProductLocation pl = new ProductLocation();
+            pl.setProduct(product);
+            pl.setLocation(location);
+            pl.setQuantity(entry.quantity());
+            productLocationRepository.save(pl);
+        }
+
+        for (ProductLocation pl : current) {
+            if (!desiredIds.contains(pl.getLocation().getId())) {
+                productLocationRepository.deleteById(pl.getId());
+            }
+        }
     }
 
     @Transactional

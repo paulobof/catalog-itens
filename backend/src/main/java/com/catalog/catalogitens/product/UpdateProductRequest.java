@@ -1,6 +1,10 @@
 package com.catalog.catalogitens.product;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -14,5 +18,17 @@ public record UpdateProductRequest(
         @Size(max = 2000, message = "Descrição não pode exceder 2000 caracteres")
         String description,
 
-        List<UUID> tagIds
-) {}
+        List<UUID> tagIds,
+
+        @Valid
+        List<ProductLocationEntry> locations
+) {
+    public record ProductLocationEntry(
+            @NotNull(message = "locationId é obrigatório")
+            UUID locationId,
+
+            @Min(value = 1, message = "Quantidade deve ser no mínimo 1")
+            @Max(value = 99999, message = "Quantidade não pode exceder 99999")
+            int quantity
+    ) {}
+}

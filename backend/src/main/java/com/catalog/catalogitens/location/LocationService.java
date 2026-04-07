@@ -105,6 +105,15 @@ public class LocationService {
     public LocationSummaryResponse update(UUID id, UpdateLocationRequest request) {
         Location location = locationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Location", id));
+
+        UUID oldRoomId = location.getRoom().getId();
+        if (!oldRoomId.equals(request.roomId())) {
+            Room newRoom = roomRepository.findById(request.roomId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Room", request.roomId()));
+            location.setRoom(newRoom);
+            log.info("Moved location {} from room {} to room {}", id, oldRoomId, newRoom.getId());
+        }
+
         location.setName(request.name());
         location.setDescription(request.description());
         location = locationRepository.save(location);
