@@ -36,7 +36,14 @@ public class ThumbnailService {
     }
 
     public String generateThumbnailUrl(String objectKey) {
-        return storageService.generatePresignedUrl(objectKey);
+        String thumbKey = objectKey.replace("photos/", "thumbs/");
+        try {
+            return storageService.generatePresignedUrl(thumbKey);
+        } catch (Exception e) {
+            log.warn("Failed to generate thumbnail URL for {}, falling back to original: {}",
+                    thumbKey, e.getMessage());
+            return storageService.generatePresignedUrl(objectKey);
+        }
     }
 
     public Map<UUID, String> generateFirstThumbnailUrls(String entityType, List<UUID> entityIds) {

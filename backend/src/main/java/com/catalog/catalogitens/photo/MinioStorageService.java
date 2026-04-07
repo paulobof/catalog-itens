@@ -2,22 +2,33 @@ package com.catalog.catalogitens.photo;
 
 import com.catalog.catalogitens.config.MinioProperties;
 import com.catalog.catalogitens.exception.StorageException;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.minio.*;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MinioStorageService implements StorageService {
 
     private final MinioClient minioClient;
     private final MinioProperties minioProperties;
+    private final Cache<String, String> presignedCache;
+
+    public MinioStorageService(MinioClient minioClient, MinioProperties minioProperties) {
+        this.minioClient = minioClient;
+        this.minioProperties = minioProperties;
+        this.presignedCache = Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofMinutes(Math.max(1, minioProperties.presignedUrlTtl() - 1)))
+                .maximumSize(5000)
+                .build();
+    }
 
     @Override
     public void upload(String objectKey, InputStream inputStream, String contentType, long size) {
@@ -39,6 +50,10 @@ public class MinioStorageService implements StorageService {
 
     @Override
     public String generatePresignedUrl(String objectKey) {
+        return presignedCache.get(objectKey, this::doGeneratePresignedUrl);
+    }
+
+    private String doGeneratePresignedUrl(String objectKey) {
         try {
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
@@ -56,6 +71,7 @@ public class MinioStorageService implements StorageService {
 
     @Override
     public void delete(String objectKey) {
+        presignedCache.invalidate(objectKey);
         try {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()

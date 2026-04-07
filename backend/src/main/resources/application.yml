@@ -64,6 +64,13 @@ management:
     health:
       show-details: never
       show-components: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,minio,db
+        liveness:
+          include: livenessState
   info:
     env:
       enabled: true

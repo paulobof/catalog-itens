@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,14 +39,29 @@ public class RoomService {
         Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls(
                 PhotoEntityType.ROOM.dbValue(), roomIds);
 
+        Map<UUID, Long> locationCounts = toCountMap(
+                roomIds.isEmpty() ? List.of() : roomRepository.countActiveLocationsByRoomIds(roomIds));
+        Map<UUID, Long> productCounts = toCountMap(
+                roomIds.isEmpty() ? List.of() : roomRepository.countActiveProductsByRoomIds(roomIds));
+
         return rooms.stream()
                 .map(room -> {
-                    long locCount = roomRepository.countActiveLocationsByRoomId(room.getId());
-                    long prodCount = roomRepository.countActiveProductsByRoomId(room.getId());
+                    long locCount = locationCounts.getOrDefault(room.getId(), 0L);
+                    long prodCount = productCounts.getOrDefault(room.getId(), 0L);
                     String thumbnailUrl = thumbnails.get(room.getId());
                     return RoomSummaryResponse.from(room, locCount, prodCount, thumbnailUrl);
                 })
                 .toList();
+    }
+
+    private Map<UUID, Long> toCountMap(List<Object[]> rows) {
+        Map<UUID, Long> result = new HashMap<>();
+        for (Object[] row : rows) {
+            UUID id = (UUID) row[0];
+            long count = ((Number) row[1]).longValue();
+            result.put(id, count);
+        }
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -56,11 +72,17 @@ public class RoomService {
         long locCount = roomRepository.countActiveLocationsByRoomId(id);
         long prodCount = roomRepository.countActiveProductsByRoomId(id);
 
+        List<UUID> locationIds = room.getLocations().stream().map(Location::getId).toList();
+        Map<UUID, String> locationThumbnails = thumbnailService.generateFirstThumbnailUrls(
+                PhotoEntityType.LOCATION.dbValue(), locationIds);
+        Map<UUID, Long> locationProductCounts = toCountMap(
+                locationIds.isEmpty() ? List.of()
+                        : locationRepository.countActiveProductsByLocationIds(locationIds));
+
         List<LocationSummaryResponse> locationResponses = room.getLocations().stream()
                 .map(loc -> {
-                    long pCount = locationRepository.countActiveProductsByLocationId(loc.getId());
-                    String locThumb = thumbnailService.generateFirstThumbnailUrl(
-                            PhotoEntityType.LOCATION.dbValue(), loc.getId());
+                    long pCount = locationProductCounts.getOrDefault(loc.getId(), 0L);
+                    String locThumb = locationThumbnails.get(loc.getId());
                     return LocationSummaryResponse.from(loc, pCount, locThumb);
                 })
                 .toList();

@@ -33,4 +33,21 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
             WHERE l.room_id = :roomId AND pl.deleted_at IS NULL AND l.deleted_at IS NULL
             """, nativeQuery = true)
     long countActiveProductsByRoomId(@Param("roomId") UUID roomId);
+
+    @Query(value = """
+            SELECT l.room_id AS roomId, COUNT(*) AS cnt
+            FROM location l
+            WHERE l.room_id IN :roomIds AND l.deleted_at IS NULL
+            GROUP BY l.room_id
+            """, nativeQuery = true)
+    List<Object[]> countActiveLocationsByRoomIds(@Param("roomIds") List<UUID> roomIds);
+
+    @Query(value = """
+            SELECT l.room_id AS roomId, COUNT(DISTINCT pl.product_id) AS cnt
+            FROM location l
+            JOIN product_location pl ON pl.location_id = l.id AND pl.deleted_at IS NULL
+            WHERE l.room_id IN :roomIds AND l.deleted_at IS NULL
+            GROUP BY l.room_id
+            """, nativeQuery = true)
+    List<Object[]> countActiveProductsByRoomIds(@Param("roomIds") List<UUID> roomIds);
 }

@@ -38,4 +38,12 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
     @Query(value = "SELECT COUNT(*) FROM product_location WHERE location_id = :locationId AND deleted_at IS NULL",
            nativeQuery = true)
     long countActiveProductsByLocationId(@Param("locationId") UUID locationId);
+
+    @Query(value = """
+            SELECT pl.location_id AS locationId, COUNT(*) AS cnt
+            FROM product_location pl
+            WHERE pl.location_id IN :locationIds AND pl.deleted_at IS NULL
+            GROUP BY pl.location_id
+            """, nativeQuery = true)
+    List<Object[]> countActiveProductsByLocationIds(@Param("locationIds") List<UUID> locationIds);
 }

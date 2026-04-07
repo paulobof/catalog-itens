@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -47,11 +48,12 @@ public class ProductService {
 
         Page<Product> products = productRepository.searchProducts(searchQuery, roomId, tagId, pageable);
 
+        List<UUID> productIds = products.getContent().stream().map(Product::getId).toList();
+        Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls(
+                PhotoEntityType.PRODUCT.dbValue(), productIds);
+
         Page<ProductSummaryResponse> responses = products.map(product -> {
-            List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityId(
-                    PhotoEntityType.PRODUCT.dbValue(), product.getId());
-            String thumbnailUrl = photos.isEmpty() ? null
-                    : thumbnailService.generateThumbnailUrl(photos.getFirst().getObjectKey());
+            String thumbnailUrl = thumbnails.get(product.getId());
 
             List<ProductSummaryResponse.TagEntry> tags = product.getProductTags().stream()
                     .map(pt -> new ProductSummaryResponse.TagEntry(

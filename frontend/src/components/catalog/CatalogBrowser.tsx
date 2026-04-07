@@ -130,6 +130,14 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
       setLoading(true)
       try {
         const res = await fetch(`/api/locations?roomId=${roomIdParam}`)
+        if (!res.ok) {
+          if (cancelled) return
+          console.error('Failed to fetch locations:', res.status)
+          showToast('Erro ao carregar locais', 'error')
+          setLocations([])
+          setProducts([])
+          return
+        }
         const data: LocationSummary[] = await res.json()
         if (cancelled) return
         setLocations(data)
@@ -139,6 +147,13 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
           if (loc) setLocationFilter({ id: loc.id, label: loc.name })
 
           const detailRes = await fetch(`/api/locations/${locationIdParam}`)
+          if (!detailRes.ok) {
+            if (cancelled) return
+            console.error('Failed to fetch location detail:', detailRes.status)
+            showToast('Erro ao carregar produtos do local', 'error')
+            setProducts([])
+            return
+          }
           const detail: LocationDetail = await detailRes.json()
           if (cancelled) return
 
@@ -160,6 +175,12 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
           setLocationFilter(null)
           setProducts([])
         }
+      } catch (err) {
+        if (cancelled) return
+        console.error('Error loading catalog data:', err)
+        showToast('Erro ao carregar dados do catálogo', 'error')
+        setLocations([])
+        setProducts([])
       } finally {
         if (!cancelled) setLoading(false)
       }
