@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { createTag, deleteTag } from '@/lib/api/tags'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Input } from '@/components/ui/Input'
 import { showToast } from '@/components/ui/Toast'
 import type { TagResponse } from '@/lib/api/types'
@@ -35,6 +36,7 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
   const [tags, setTags] = useState<TagResponse[]>(initialTags)
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pendingTag, setPendingTag] = useState<TagResponse | null>(null)
 
   const {
     register,
@@ -66,19 +68,14 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
     }
   }
 
-  async function handleDelete(tag: TagResponse) {
-    if (
-      !confirm(
-        `Remover a tag "${tag.name}"? Ela será desassociada de todos os produtos.`,
-      )
-    ) {
-      return
-    }
-    setDeletingId(tag.id)
+  async function confirmDeleteTag() {
+    if (!pendingTag) return
+    setDeletingId(pendingTag.id)
     try {
-      await deleteTag(tag.id)
-      setTags((prev) => prev.filter((t) => t.id !== tag.id))
-      showToast(`Tag "${tag.name}" removida.`, 'info')
+      await deleteTag(pendingTag.id)
+      setTags((prev) => prev.filter((t) => t.id !== pendingTag.id))
+      showToast(`Tag "${pendingTag.name}" removida.`, 'info')
+      setPendingTag(null)
     } catch {
       showToast('Erro ao remover tag.', 'error')
     } finally {
@@ -167,7 +164,7 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
                 </Badge>
                 <button
                   type="button"
-                  onClick={() => void handleDelete(tag)}
+                  onClick={() => setPendingTag(tag)}
                   disabled={deletingId === tag.id}
                   aria-label={`Remover tag ${tag.name}`}
                   className="flex h-5 w-5 items-center justify-center rounded-full text-xs text-barbie-text/30 hover:bg-red-50 hover:text-red-500 disabled:opacity-40"
@@ -179,6 +176,23 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
           </ul>
         )}
       </section>
+
+      <ConfirmDialog
+        open={pendingTag !== null}
+        title="Remover tag?"
+        description={
+          pendingTag && (
+            <p>
+              A tag <strong>{pendingTag.name}</strong> será desassociada de
+              todos os produtos. Essa ação não pode ser desfeita.
+            </p>
+          )
+        }
+        confirmLabel="Remover"
+        destructive
+        onConfirm={confirmDeleteTag}
+        onCancel={() => setPendingTag(null)}
+      />
     </div>
   )
 }

@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Card, CardBody } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
 import { Badge } from '@/components/ui/Badge'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { FAB } from '@/components/layout/FAB'
 import { showToast } from '@/components/ui/Toast'
 import type {
@@ -238,41 +239,59 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     router.push('/')
   }, [router])
 
-  const deleteRoom = useCallback(async (room: RoomSummary) => {
-    if (!window.confirm(`Tem certeza que deseja excluir ${room.name}?`)) return
-    try {
-      const res = await fetch(`/api/rooms/${room.id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Falha ao excluir')
-      setRooms((prev) => prev.filter((r) => r.id !== room.id))
-      showToast(`"${room.name}" excluído com sucesso.`, 'success')
-    } catch {
-      showToast('Erro ao excluir o cômodo. Tente novamente.', 'error')
-    }
-  }, [])
+  type PendingDelete =
+    | { type: 'room'; item: RoomSummary }
+    | { type: 'location'; item: LocationSummary }
+    | { type: 'product'; item: ProductSummary }
 
-  const deleteProduct = useCallback(async (product: ProductSummary) => {
-    if (!window.confirm(`Tem certeza que deseja excluir ${product.name}?`)) return
-    try {
-      const res = await fetch(`/api/products/${product.id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Falha ao excluir')
-      setProducts((prev) => prev.filter((p) => p.id !== product.id))
-      showToast(`"${product.name}" excluído com sucesso.`, 'success')
-    } catch {
-      showToast('Erro ao excluir o produto. Tente novamente.', 'error')
-    }
-  }, [])
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null)
 
-  const deleteLocation = useCallback(async (location: LocationSummary) => {
-    if (!window.confirm(`Tem certeza que deseja excluir ${location.name}?`)) return
+  const requestDeleteRoom = useCallback(
+    (room: RoomSummary) => setPendingDelete({ type: 'room', item: room }),
+    [],
+  )
+  const requestDeleteLocation = useCallback(
+    (loc: LocationSummary) => setPendingDelete({ type: 'location', item: loc }),
+    [],
+  )
+  const requestDeleteProduct = useCallback(
+    (product: ProductSummary) => setPendingDelete({ type: 'product', item: product }),
+    [],
+  )
+
+  const confirmPendingDelete = useCallback(async () => {
+    if (!pendingDelete) return
     try {
-      const res = await fetch(`/api/locations/${location.id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Falha ao excluir')
-      setLocations((prev) => prev.filter((l) => l.id !== location.id))
-      showToast(`"${location.name}" excluído com sucesso.`, 'success')
+      if (pendingDelete.type === 'room') {
+        const room = pendingDelete.item
+        const res = await fetch(`/api/rooms/${room.id}`, { method: 'DELETE' })
+        if (!res.ok) throw new Error('Falha ao excluir')
+        setRooms((prev) => prev.filter((r) => r.id !== room.id))
+        showToast(`"${room.name}" excluído com sucesso.`, 'success')
+      } else if (pendingDelete.type === 'location') {
+        const loc = pendingDelete.item
+        const res = await fetch(`/api/locations/${loc.id}`, { method: 'DELETE' })
+        if (!res.ok) throw new Error('Falha ao excluir')
+        setLocations((prev) => prev.filter((l) => l.id !== loc.id))
+        showToast(`"${loc.name}" excluído com sucesso.`, 'success')
+      } else {
+        const product = pendingDelete.item
+        const res = await fetch(`/api/products/${product.id}`, { method: 'DELETE' })
+        if (!res.ok) throw new Error('Falha ao excluir')
+        setProducts((prev) => prev.filter((p) => p.id !== product.id))
+        showToast(`"${product.name}" excluído com sucesso.`, 'success')
+      }
+      setPendingDelete(null)
     } catch {
-      showToast('Erro ao excluir o local. Tente novamente.', 'error')
+      const label =
+        pendingDelete.type === 'room'
+          ? 'o cômodo'
+          : pendingDelete.type === 'location'
+            ? 'o local'
+            : 'o produto'
+      showToast(`Erro ao excluir ${label}. Tente novamente.`, 'error')
     }
-  }, [])
+  }, [pendingDelete])
 
   return (
     <div className="flex flex-col gap-4">
@@ -422,8 +441,8 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                           role="button"
                           tabIndex={0}
                           aria-label={`Excluir ${room.name}`}
-                          onClick={(e) => { e.stopPropagation(); deleteRoom(room) }}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteRoom(room) } }}
+                          onClick={(e) => { e.stopPropagation(); requestDeleteRoom(room) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); requestDeleteRoom(room) } }}
                           className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
                         >
                           <TrashIcon />
@@ -493,8 +512,8 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                           role="button"
                           tabIndex={0}
                           aria-label={`Excluir ${loc.name}`}
-                          onClick={(e) => { e.stopPropagation(); deleteLocation(loc) }}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); deleteLocation(loc) } }}
+                          onClick={(e) => { e.stopPropagation(); requestDeleteLocation(loc) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); requestDeleteLocation(loc) } }}
                           className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
                         >
                           <TrashIcon />
@@ -564,8 +583,8 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
                           role="button"
                           tabIndex={0}
                           aria-label={`Excluir ${product.name}`}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteProduct(product) }}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); deleteProduct(product) } }}
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); requestDeleteProduct(product) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); requestDeleteProduct(product) } }}
                           className="flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-red-600 hover:text-white transition-colors"
                         >
                           <TrashIcon />
@@ -616,6 +635,43 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
               ? 'Adicionar local'
               : 'Adicionar produto'
         }
+      />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={
+          pendingDelete
+            ? pendingDelete.type === 'room'
+              ? 'Excluir cômodo?'
+              : pendingDelete.type === 'location'
+                ? 'Excluir local?'
+                : 'Excluir produto?'
+            : ''
+        }
+        description={
+          pendingDelete && (
+            <>
+              <p>
+                Esta ação vai excluir <strong>{pendingDelete.item.name}</strong>.
+              </p>
+              {pendingDelete.type === 'room' && (
+                <p className="mt-2 text-red-600">
+                  Todos os locais e produtos dentro deste cômodo serão também
+                  removidos.
+                </p>
+              )}
+              {pendingDelete.type === 'location' && (
+                <p className="mt-2 text-red-600">
+                  Os produtos associados a este local perdem essa associação.
+                </p>
+              )}
+            </>
+          )
+        }
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={confirmPendingDelete}
+        onCancel={() => setPendingDelete(null)}
       />
     </div>
   )
