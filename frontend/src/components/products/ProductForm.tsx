@@ -45,6 +45,32 @@ function createEmptySlots(): PhotoSlot[] {
   ]
 }
 
+const MIN_QTY = 1
+const MAX_QTY = 99999
+
+function TrashIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  )
+}
+
 export function ProductForm({
   product,
   allTags,
@@ -139,9 +165,32 @@ export function ProductForm({
     setSelectedLocationId('')
   }
 
-  function updateLocationQuantity(locationId: string, quantity: number) {
+  function setLocationQuantity(locationId: string, quantity: number) {
+    const clamped = Math.min(MAX_QTY, Math.max(MIN_QTY, quantity))
     setLocationEntries((prev) =>
-      prev.map((e) => (e.locationId === locationId ? { ...e, quantity } : e)),
+      prev.map((e) =>
+        e.locationId === locationId ? { ...e, quantity: clamped } : e,
+      ),
+    )
+  }
+
+  function incrementLocation(locationId: string) {
+    setLocationEntries((prev) =>
+      prev.map((e) =>
+        e.locationId === locationId
+          ? { ...e, quantity: Math.min(MAX_QTY, e.quantity + 1) }
+          : e,
+      ),
+    )
+  }
+
+  function decrementLocation(locationId: string) {
+    setLocationEntries((prev) =>
+      prev.map((e) =>
+        e.locationId === locationId
+          ? { ...e, quantity: Math.max(MIN_QTY, e.quantity - 1) }
+          : e,
+      ),
     )
   }
 
@@ -291,6 +340,15 @@ export function ProductForm({
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => decrementLocation(entry.locationId)}
+                    disabled={entry.quantity <= MIN_QTY}
+                    aria-label={`Diminuir quantidade em ${entry.locationName}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    −
+                  </button>
                   <label
                     htmlFor={`qty-${entry.locationId}`}
                     className="sr-only"
@@ -299,26 +357,36 @@ export function ProductForm({
                   </label>
                   <input
                     id={`qty-${entry.locationId}`}
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min={1}
-                    max={99999}
+                    pattern="[0-9]*"
                     value={entry.quantity}
-                    onChange={(e) =>
-                      updateLocationQuantity(
-                        entry.locationId,
-                        Math.max(1, parseInt(e.target.value, 10) || 1),
+                    onChange={(e) => {
+                      const parsed = parseInt(
+                        e.target.value.replace(/[^0-9]/g, ''),
+                        10,
                       )
-                    }
-                    className="w-14 rounded-lg border border-barbie-accent bg-white px-1 py-1 text-center text-sm focus:border-barbie-primary focus:outline-none focus:ring-1 focus:ring-barbie-primary/30"
+                      if (Number.isNaN(parsed)) return
+                      setLocationQuantity(entry.locationId, parsed)
+                    }}
+                    className="w-10 rounded-lg border border-barbie-accent bg-white px-1 py-1 text-center text-sm tabular-nums focus:border-barbie-primary focus:outline-none focus:ring-1 focus:ring-barbie-primary/30"
                   />
+                  <button
+                    type="button"
+                    onClick={() => incrementLocation(entry.locationId)}
+                    disabled={entry.quantity >= MAX_QTY}
+                    aria-label={`Aumentar quantidade em ${entry.locationName}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-barbie-accent bg-white text-lg font-bold leading-none text-barbie-dark hover:bg-barbie-bg-soft disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    +
+                  </button>
                   <button
                     type="button"
                     onClick={() => removeLocationEntry(entry.locationId)}
                     aria-label={`Remover ${entry.locationName}`}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-barbie-text/40 hover:bg-red-50 hover:text-red-500"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 hover:bg-red-50"
                   >
-                    ✕
+                    <TrashIcon />
                   </button>
                 </div>
               </li>
