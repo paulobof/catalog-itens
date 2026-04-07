@@ -49,7 +49,6 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
   const [selectedForMove, setSelectedForMove] = useState<number | null>(null)
   const slotRefs = useRef<Array<HTMLDivElement | null>>([])
 
-  // Cache blob URLs keyed on the File reference so we only create one per file.
   const blobUrlCacheRef = useRef<Map<File, string>>(new Map())
 
   const previewUrls = useMemo(() => {
@@ -69,7 +68,6 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
       return null
     })
 
-    // Revoke URLs for files that are no longer present in any slot.
     for (const [file, url] of cache.entries()) {
       if (!stillReferenced.has(file)) {
         URL.revokeObjectURL(url)

@@ -43,7 +43,12 @@ Aplicação web pessoal para catalogar itens da casa organizados em **cômodo �
 - **Soft-delete** com cascade automático (apaga local → apaga fotos do local)
 - **Tema Barbie** (rosa/pink) responsivo e mobile-first
 - **PWA instalável** com ícone próprio
-- **Autenticação** com 2 usuários fixos no banco (sem cadastro público)
+- **Autenticação** com JWT HS256 assinado, 2 usuários fixos no banco
+  - BCrypt + pepper, rate limiting (5 tentativas/15 min), anti timing-attack
+  - Backend protegido por Spring Security validando o mesmo JWT do frontend
+- **API versionada** em `/api/v1/*`
+- **Performance**: queries em batch (sem N+1), Caffeine cache de presigned URLs, UUID v6 time-ordered
+- **Acessibilidade WCAG 2.1 AA**: keyboard nav, focus-visible, ARIA labels, contraste corrigido
 
 ---
 
@@ -51,23 +56,26 @@ Aplicação web pessoal para catalogar itens da casa organizados em **cômodo �
 
 | Camada | Tecnologia | Versão |
 |--------|-----------|--------|
-| **Frontend** | Next.js (App Router) | 15.3 |
+| **Frontend** | Next.js (App Router) | 15.5.14 |
 | | React | 19 |
 | | TypeScript | 5 |
 | | Tailwind CSS | 4 |
 | | React Hook Form | 7 |
-| **Backend** | Spring Boot | 3.4 |
+| | jose (JWT HS256) | latest |
+| **Backend** | Spring Boot | 3.4.1 |
 | | Java | 21 |
 | | Spring Data JPA | 3.4 |
-| | Spring Security Crypto (BCrypt) | 6 |
-| | Spring Actuator + Micrometer Prometheus | 3.4 |
+| | Spring Security (filter chain + BCrypt) | 6 |
+| | Caffeine (cache de presigned URLs) | latest |
+| | Spring Actuator (health/info only) | 3.4 |
 | | Lombok | latest |
-| **Banco** | PostgreSQL | 16 (`pg_trgm`, `tsvector`) |
+| **Banco** | PostgreSQL | 16 (`pg_trgm`, `tsvector`, UUID v6) |
 | **Storage** | MinIO | 2024-11 (S3-compatível) |
 | **Imagens** | Thumbnailator | 0.4.20 |
 | **Migrações** | Flyway | latest |
 | **Deploy** | Docker Compose + Dokploy + Traefik | — |
-| **Pre-commit** | Husky | latest |
+| **Pre-commit** | Husky (lint, type-check, mvn test) | latest |
+| **Tests** | JUnit 5 + Mockito + Testcontainers | — |
 
 ---
 
@@ -266,8 +274,44 @@ Para bypass: `git commit --no-verify` (não recomendado).
 | Método | Endpoint | Descrição |
 |--------|----------|-----------|
 | GET    | `/api/health` | Frontend health (Next.js, sem proxy) |
-| GET    | `/actuator/health` | Backend health (sem detalhes) |
+| GET    | `/actuator/health/liveness` | Backend liveness (so app responde) — usado pelo Docker healthcheck |
+| GET    | `/actuator/health/readiness` | Backend readiness (inclui MinIO + DB) |
+| GET    | `/actuator/health` | Backend health agregado (sem detalhes) |
 | GET    | `/actuator/info` | Versão e info do app |
+
+---
+
+## Segurança
+
+### Camadas de defesa
+
+1. **Network isolation** — Postgres em rede `internal: true`, sem rota externa. Backend so via Traefik (frontend).
+2. **Frontend middleware** — Valida JWT em todas as rotas (exceto `/login`, `/api/auth/login`, `/api/health`).
+3. **Backend Spring Security** — `JwtAuthFilter` valida o mesmo JWT (HMAC-SHA256 constant-time compare). Sem token valido = 401.
+4. **Rate limiting** — `LoginRateLimiter` (in-memory, sliding window): 5 tentativas / 15 min por IP + por email, lockout de 15 min.
+5. **Anti timing-attack** — `AuthService.authenticate` sempre roda BCrypt (com `DUMMY_HASH` quando o usuario nao existe).
+6. **BCrypt + pepper** — Cost 12, pepper via env var `APP_AUTH_PEPPER`.
+7. **CSP** — `next.config.ts` define CSP estrita: sem `unsafe-eval`, `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`.
+8. **Input validation** — Magic bytes em uploads, dimensoes max 50 MP (anti decompression bomb), Bean Validation em DTOs.
+9. **Soft-delete** com cascade — `@SQLDelete` + `@SQLRestriction` em todas as entidades.
+10. **PII em logs** — emails nunca aparecem em logs (so o ID do usuario apos auth).
+
+### Auth flow
+
+```
+1. Browser → POST /api/auth/login {email, password}
+2. Next.js /api/auth/login → POST backend /api/v1/auth/login
+3. Backend AuthService.authenticate
+   - LoginRateLimiter.checkLockout
+   - BCrypt.matches(password + pepper) sempre executado
+4. Backend retorna {id, email, name}
+5. Next.js cria JWT HS256 assinado com SESSION_SECRET (jose)
+6. Cookie httpOnly catalog-session = <jwt>
+7. Requests subsequentes:
+   - Browser → Next.js middleware (verifica JWT)
+   - Next.js proxy → backend com Authorization: Bearer <jwt>
+   - Backend JwtAuthFilter valida assinatura + expiracao
+```
 
 ---
 

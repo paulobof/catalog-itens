@@ -30,15 +30,52 @@ Extraido dos comentarios removidos durante a limpeza do codigo.
 - Limites por IP e por email, 5 tentativas em 15 min, lockout de 15 min apos exceder.
 - Armazenamento em `ConcurrentHashMap` — nao sobrevive a restart e nao coordena entre instancias. Aceitavel para deploy single-node; migrar para Redis em HA.
 
+### Spring Security + JWT — Validacao backend
+
+- O backend NAO emite tokens — so valida.
+- O frontend Next.js assina JWTs HS256 com `SESSION_SECRET` no `/api/auth/login`.
+- O proxy `/api/[...path]/route.ts` le o cookie `catalog-session` e re-injeta como `Authorization: Bearer <jwt>` ao chamar o backend.
+- `JwtAuthFilter.constantTimeEquals()` evita side-channel timing attack na verificacao da assinatura HMAC.
+- `SecurityConfig.filterChain` permite so `/api/v1/auth/login`, `/actuator/health`, `/actuator/info`, `/error` sem auth.
+
 ---
 
 ## Backend — Fotos
 
-### `ThumbnailService.generateThumbnailUrl()` retorna a URL DA ORIGINAL
+### `ThumbnailService.generateThumbnailUrl()` retorna URL do thumb real
 
-- Apesar do nome, o metodo retorna URL presigned da **imagem original (2048 px max)**, nao do thumbnail 600 px.
-- Rationale: o `<Image>` do Next.js otimiza server-side para o tamanho exato de cada device. Servir a 2048 px garante sharpness em telas retina (onde um "thumbnail" de 300 px seria borrado ao ser exibido a 200 CSS px em 3x DPR).
-- O arquivo thumbnail de 600 px continua sendo gerado e armazenado — serve como fallback para clientes sem image optimizer.
+- O metodo agora retorna URL presigned do **thumbnail 600 px** (object key com `thumbs/` em vez de `photos/`).
+- Em caso de erro ao gerar a URL do thumb, faz fallback automatico para a URL da imagem original.
+- O upload assincrono (`uploadThumbnailAsync` via `@Async("photoExecutor")`) gera o thumb 600 px logo apos o upload da original.
+
+### `MinioStorageService` — Cache Caffeine de presigned URLs
+
+- Cache in-memory com TTL `presignedUrlTtl - 1 min` (default: 59 min). Tamanho max: 5000 entries.
+- `generatePresignedUrl(objectKey)` consulta o cache antes de chamar o MinIO. Reduz drasticamente as chamadas HTTP em listagens (1 request gera 1 chamada MinIO em vez de N).
+- `delete(objectKey)` invalida o cache antes de deletar.
+- Compativel com horizontal scaling? Nao — cada instancia tem seu cache. Aceitavel single-node, migrar para Redis em HA.
+
+### N+1 fixes — Batch loading
+
+- `RoomService.findAll()` usa `RoomRepository.countActiveLocationsByRoomIds(List<UUID>)` e `countActiveProductsByRoomIds(List<UUID>)` — cada um e uma query SQL com `GROUP BY`. Total: 3 queries (rooms + locations counts + products counts), independente do numero de rooms.
+- `RoomService.findById()` usa `LocationRepository.countActiveProductsByLocationIds(List<UUID>)` para counts em batch + `ThumbnailService.generateFirstThumbnailUrls()` para thumbnails em batch.
+- `ProductService.search()` usa `ThumbnailService.generateFirstThumbnailUrls(PRODUCT, productIds)` antes do `.map()`.
+- Padrao: coletar IDs primeiro, fazer 1 query agregada, montar `Map<UUID, ...>` para lookup O(1) no loop.
+
+### UUID v6 (time-ordered) via Hibernate
+
+- Todas as entidades usam `@org.hibernate.annotations.UuidGenerator(style = UuidGenerator.Style.TIME)` em vez de `@GeneratedValue(GenerationType.UUID)`.
+- Antes: Hibernate gerava v4 random, ignorando o `DEFAULT uuid_generate_v7()` do schema.
+- Agora: Hibernate gera v6 time-ordered (similar a v7 — bits de timestamp sao prefixo), restaurando localidade de B-tree e ordenacao temporal natural.
+- O default SQL `uuid_generate_v7()` ainda existe no schema mas nao e disparado (Hibernate envia o UUID ja preenchido no INSERT).
+
+### Health probes — liveness vs readiness
+
+- `application.yml` define `management.endpoint.health.probes.enabled: true` com:
+  - `liveness.include: livenessState` (so verifica se a JVM responde)
+  - `readiness.include: readinessState, minio, db` (verifica dependencias externas)
+- O Docker healthcheck do backend agora hita `/actuator/health/liveness` em vez de `/actuator/health`.
+- **Por que:** se o MinIO ficar fora, o backend ainda consegue servir CRUD que nao usa fotos. Antes, o `MinioHealthIndicator` derrubava o `/actuator/health` agregado, fazendo o Docker matar o container e quebrar tudo.
 
 ### `PhotoService` — Cascade soft-delete
 
