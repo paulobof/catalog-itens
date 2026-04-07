@@ -12,12 +12,51 @@
 
 > Os itens deste bloco transformam a autenticacao de "teatro" em real. **Nao deploy nada novo antes destes itens.**
 
-### 🔴 SEC-01 — Trocar senhas dos 2 usuarios em todos os sistemas onde foram reutilizadas
-- [ ] Trocar senha de `paulobof@gmail.com` (estava `***REMOVED***`)
-- [ ] Trocar senha de `tamara_saka@hotmail.com` (estava `***REMOVED***`)
+### 🔴 SEC-01 — Trocar senhas dos 2 usuarios via UPDATE direto no banco
+> **Importante:** Trocar via SQL direto no Postgres em producao, **sem redeploy**. O `UserSeeder` so insere se o usuario nao existe (`findByEmail.isEmpty()`), entao alterar o hash no banco e suficiente.
+
+**Passo a passo:**
+
+1. Definir as 2 novas senhas (em segredo, fora do repo)
+
+2. Gerar o hash BCrypt + pepper para cada uma:
+   ```bash
+   ./scripts/hash-password.sh 'NovaSenhaPaulo@2026'
+   # Output: $2a$12$.....hash.....
+
+   ./scripts/hash-password.sh 'NovaSenhaTamara@2026'
+   # Output: $2a$12$.....hash.....
+   ```
+
+3. Conectar no Postgres de producao:
+   ```bash
+   docker compose exec db psql -U catalog catalog_itens
+   ```
+
+4. Aplicar os UPDATEs:
+   ```sql
+   UPDATE app_user
+      SET password = '$2a$12$COLE_AQUI_O_HASH_DO_PAULO'
+    WHERE email = 'paulobof@gmail.com';
+
+   UPDATE app_user
+      SET password = '$2a$12$COLE_AQUI_O_HASH_DA_TAMARA'
+    WHERE email = 'tamara_saka@hotmail.com';
+   ```
+
+5. Validar fazendo login com as novas senhas em https://catalogo.paulobof.com.br/login
+
+- [ ] Senhas novas definidas (anotar em gerenciador de senhas, NAO no repo)
+- [ ] Hash gerado para `paulobof@gmail.com`
+- [ ] Hash gerado para `tamara_saka@hotmail.com`
+- [ ] UPDATE executado no banco
+- [ ] Login validado para os 2 usuarios
 - [ ] Auditar contas externas que possam usar o padrao `Pt + 6 digitos + @` (credential stuffing)
-- **Tempo:** 30 min
-- **Origem:** Java#1, Security CRIT-3, Pentest HIGH-01, Architecture D-02
+
+**Tempo:** 15 min
+**Helper:** `scripts/hash-password.sh` + `backend/.../auth/PasswordHasherTool.java`
+**Nota:** Apos SEC-03 (pepper em env var), se mudar o pepper sera necessario regerar os hashes
+**Origem:** Java#1, Security CRIT-3, Pentest HIGH-01, Architecture D-02
 
 ### 🔴 SEC-02 — Mover seed de usuarios para variaveis de ambiente
 - [ ] Adicionar env vars `SEED_USER_1_EMAIL`, `SEED_USER_1_PASSWORD`, `SEED_USER_1_NAME` (idem 2)
