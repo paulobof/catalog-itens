@@ -1,10 +1,14 @@
 /**
  * Base API client for catalog-itens backend.
  *
- * - Server-side (RSC, Server Actions): uses API_URL (internal Docker network)
- * - Client-side: uses NEXT_PUBLIC_API_URL (proxied via Next.js route handler)
+ * - Server-side (RSC, Server Actions): uses API_URL and reads the session
+ *   cookie to add Authorization: Bearer header so the backend can authenticate.
+ * - Client-side: uses relative URL (proxied via Next.js route handler, which
+ *   handles the JWT forwarding).
  * - Injects X-Request-Id for correlation logging
  */
+
+import { SESSION_COOKIE_NAME } from '@/lib/auth/session'
 
 export class ApiError extends Error {
   public readonly status: number
@@ -36,6 +40,22 @@ function getBaseUrl(): string {
 
 function generateRequestId(): string {
   return `req-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+async function getAuthHeader(): Promise<string | null> {
+  if (typeof window !== 'undefined') {
+    // Browser: o proxy route handler cuida do JWT forwarding
+    return null
+  }
+  // Server-side: le o cookie e envia como Authorization: Bearer
+  try {
+    const { cookies } = await import('next/headers')
+    const cookieStore = await cookies()
+    const session = cookieStore.get(SESSION_COOKIE_NAME)
+    return session?.value ? `Bearer ${session.value}` : null
+  } catch {
+    return null
+  }
 }
 
 interface FetchOptions extends RequestInit {
@@ -73,6 +93,11 @@ export async function fetchApi<T>(
   headers.set('X-Request-Id', requestId)
   if (!headers.has('Content-Type') && !(fetchInit.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
+  }
+
+  const authHeader = await getAuthHeader()
+  if (authHeader && !headers.has('Authorization')) {
+    headers.set('Authorization', authHeader)
   }
 
   const response = await fetch(url, {

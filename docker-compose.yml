@@ -47,6 +47,8 @@ services:
       API_URL: http://backend:8080
       # Client-side API URL (browser JS is proxied through Next.js route handlers)
       NEXT_PUBLIC_API_URL: ""
+      # Segredo compartilhado com o backend para assinar JWTs (min 32 chars)
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required (min 32 chars)}
     networks:
       - frontend-net
       - dokploy-network
@@ -103,6 +105,10 @@ services:
       SEED_USER_2_EMAIL: ${SEED_USER_2_EMAIL:-}
       SEED_USER_2_PASSWORD: ${SEED_USER_2_PASSWORD:-}
       SEED_USER_2_NAME: ${SEED_USER_2_NAME:-}
+      # Pepper para BCrypt — manter "pepper2" em prod (compativel com senhas no banco)
+      APP_AUTH_PEPPER: ${APP_AUTH_PEPPER:-pepper2}
+      # Segredo compartilhado com o frontend para assinar/validar JWTs
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required (min 32 chars)}
       # JVM container support flags
       JAVA_TOOL_OPTIONS: >-
         -XX:+UseContainerSupport

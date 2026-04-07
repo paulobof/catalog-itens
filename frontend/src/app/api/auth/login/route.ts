@@ -1,23 +1,29 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import {
+  createSessionToken,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE,
+} from '@/lib/auth/session'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8080'
-const COOKIE_NAME = 'catalog-session'
-const MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 
 export async function POST(request: Request) {
   const reqId = `login-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-  console.log(`[auth/login ${reqId}] start, API_URL=${API_URL}`)
 
   let body: { email?: string; password?: string }
   try {
     body = await request.json()
-  } catch (err) {
-    console.error(`[auth/login ${reqId}] invalid JSON`, err)
+  } catch {
     return NextResponse.json({ message: 'Requisição inválida' }, { status: 400 })
   }
 
-  console.log(`[auth/login ${reqId}] forwarding to backend, email=${body.email}`)
+  if (!body.email || !body.password) {
+    return NextResponse.json(
+      { message: 'E-mail e senha são obrigatórios' },
+      { status: 400 },
+    )
+  }
 
   let backendRes: Response
   try {
@@ -25,35 +31,37 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
     })
   } catch (err) {
-    console.error(`[auth/login ${reqId}] backend fetch failed`, err)
-    return NextResponse.json(
-      { message: `Backend indisponível: ${err instanceof Error ? err.message : 'erro desconhecido'}` },
-      { status: 502 },
-    )
+    console.error(`[auth/login ${reqId}] backend unreachable`, err)
+    return NextResponse.json({ message: 'Serviço indisponível' }, { status: 502 })
   }
 
-  console.log(`[auth/login ${reqId}] backend status ${backendRes.status}`)
-
   if (!backendRes.ok) {
-    const error = await backendRes.json().catch(() => ({ message: 'Erro ao autenticar' }))
-    console.warn(`[auth/login ${reqId}] backend rejected`, error)
+    const error = await backendRes
+      .json()
+      .catch(() => ({ message: 'Erro ao autenticar' }))
     return NextResponse.json(error, { status: backendRes.status })
   }
 
   const user = await backendRes.json()
-  console.log(`[auth/login ${reqId}] success, user=${user.email}`)
 
-  const sessionData = Buffer.from(JSON.stringify(user)).toString('base64')
+  // Cria JWT assinado (nao pode ser forjado sem o SESSION_SECRET)
+  const token = await createSessionToken({
+    id: user.id,
+    email: user.email,
+    name: user.name ?? null,
+  })
+
   const cookieStore = await cookies()
-  cookieStore.set(COOKIE_NAME, sessionData, {
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: MAX_AGE,
+    maxAge: SESSION_MAX_AGE,
     path: '/',
   })
 
-  return NextResponse.json(user)
+  return NextResponse.json({ id: user.id, email: user.email, name: user.name })
 }

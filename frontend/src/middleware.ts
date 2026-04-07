@@ -1,28 +1,42 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session'
 
-const PUBLIC_PATHS = ['/login', '/api/auth/', '/api/health', '/manifest.webmanifest']
+// Paths que nao exigem autenticacao — igualdade exata ou prefixo conhecido
+const PUBLIC_EXACT = new Set<string>([
+  '/login',
+  '/api/health',
+  '/manifest.webmanifest',
+])
+
+const PUBLIC_PREFIXES = [
+  '/api/auth/login',
+  '/api/auth/logout',
+]
 
 function isPublic(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+  if (PUBLIC_EXACT.has(pathname)) return true
+  return PUBLIC_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + '/'),
+  )
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip auth for public paths and static assets
   if (isPublic(pathname)) {
     const response = NextResponse.next()
     response.headers.set('x-pathname', pathname)
     return response
   }
 
-  // Check session cookie
-  const session = request.cookies.get('catalog-session')
-  if (!session?.value) {
+  // Valida o JWT do cookie (assinatura + expiracao)
+  const cookie = request.cookies.get(SESSION_COOKIE_NAME)
+  const session = cookie?.value ? await verifySessionToken(cookie.value) : null
+
+  if (!session) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If logged in and accessing /login, redirect to home
   if (pathname === '/login') {
     return NextResponse.redirect(new URL('/', request.url))
   }
@@ -34,6 +48,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon-).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon-|icon\\.svg).*)',
   ],
 }

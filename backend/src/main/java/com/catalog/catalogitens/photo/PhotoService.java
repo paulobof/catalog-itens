@@ -10,11 +10,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -26,6 +30,8 @@ public class PhotoService {
 
     private static final int MAX_PHOTOS_PER_ENTITY = 3;
     private static final int MAX_DIMENSION = 2048;
+    /** Previne decompression bomb: 50 MP = ~200MB descompactado em memoria. */
+    private static final long MAX_PIXELS = 50_000_000L;
     private static final String OUTPUT_FORMAT = "jpeg";
     private static final String CONTENT_TYPE = "image/jpeg";
     private static final String EXTENSION = "jpg";
@@ -187,6 +193,10 @@ public class PhotoService {
 
     private byte[] readAndReencode(MultipartFile file) {
         try {
+            // Valida dimensoes em modo lazy ANTES de carregar os pixels na memoria.
+            // Previne decompression bomb: um PNG de 80KB pode descompactar para 30GB.
+            validateDimensions(file);
+
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             Thumbnails.of(file.getInputStream())
                     .size(MAX_DIMENSION, MAX_DIMENSION)
@@ -197,6 +207,35 @@ public class PhotoService {
             return out.toByteArray();
         } catch (IOException e) {
             throw new InvalidFileException("Failed to process image: " + e.getMessage());
+        }
+    }
+
+    private void validateDimensions(MultipartFile file) throws IOException {
+        try (InputStream in = file.getInputStream();
+             ImageInputStream iis = ImageIO.createImageInputStream(in)) {
+            if (iis == null) {
+                throw new InvalidFileException("Arquivo nao e uma imagem valida");
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+            if (!readers.hasNext()) {
+                throw new InvalidFileException("Formato de imagem nao suportado");
+            }
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(iis, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                long pixels = (long) width * (long) height;
+                if (pixels > MAX_PIXELS) {
+                    throw new InvalidFileException(
+                            "Imagem muito grande: " + width + "x" + height +
+                            " (" + (pixels / 1_000_000) + " MP). Maximo " +
+                            (MAX_PIXELS / 1_000_000) + " MP.");
+                }
+                log.debug("Imagem valida: {}x{} ({} MP)", width, height, pixels / 1_000_000);
+            } finally {
+                reader.dispose();
+            }
         }
     }
 
