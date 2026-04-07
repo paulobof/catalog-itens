@@ -15,10 +15,6 @@ import type {
   ProductSummary,
 } from '@/lib/api/types'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 type View = 'rooms' | 'locations' | 'products'
 
 interface FilterChip {
@@ -29,10 +25,6 @@ interface FilterChip {
 interface CatalogBrowserProps {
   initialRooms: RoomSummary[]
 }
-
-// ---------------------------------------------------------------------------
-// Icons
-// ---------------------------------------------------------------------------
 
 function RoomIcon() {
   return (
@@ -97,10 +89,6 @@ function EditIcon() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -112,22 +100,17 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
   const [products, setProducts] = useState<ProductSummary[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Search / text filter
   const [searchText, setSearchText] = useState('')
 
-  // Active filters (derived from URL)
   const [roomFilter, setRoomFilter] = useState<FilterChip | null>(null)
   const [locationFilter, setLocationFilter] = useState<FilterChip | null>(null)
 
-  // Derive view from URL params
   const view: View = locationIdParam ? 'products' : roomIdParam ? 'locations' : 'rooms'
 
-  // Sync data with URL params (handles back/forward navigation)
   useEffect(() => {
     let cancelled = false
 
     async function loadFromUrl() {
-      // No room param → showing rooms list, nothing to fetch
       if (!roomIdParam) {
         setRoomFilter(null)
         setLocationFilter(null)
@@ -137,7 +120,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         return
       }
 
-      // Has room param → load locations
       const room = rooms.find((r) => r.id === roomIdParam)
       if (room && !cancelled) {
         setRoomFilter({ id: room.id, label: room.name })
@@ -150,7 +132,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         if (cancelled) return
         setLocations(data)
 
-        // Has location param → also load products
         if (locationIdParam) {
           const loc = data.find((l) => l.id === locationIdParam)
           if (loc) setLocationFilter({ id: loc.id, label: loc.name })
@@ -185,7 +166,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     }
   }, [roomIdParam, locationIdParam, rooms])
 
-  // Filtered lists based on search text
   const normalizedSearch = searchText.toLowerCase().trim()
 
   const filteredRooms = useMemo(
@@ -212,7 +192,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     [products, normalizedSearch],
   )
 
-  // Navigation helpers (push URL — useEffect handles fetching)
   const selectRoom = useCallback((room: RoomSummary) => {
     setSearchText('')
     router.push(`/?room=${room.id}`)
@@ -233,7 +212,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     router.push('/')
   }, [router])
 
-  // Delete a room (soft-delete via API)
   const deleteRoom = useCallback(async (room: RoomSummary) => {
     if (!window.confirm(`Tem certeza que deseja excluir ${room.name}?`)) return
     try {
@@ -246,7 +224,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     }
   }, [])
 
-  // Delete a product (soft-delete via API)
   const deleteProduct = useCallback(async (product: ProductSummary) => {
     if (!window.confirm(`Tem certeza que deseja excluir ${product.name}?`)) return
     try {
@@ -259,7 +236,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     }
   }, [])
 
-  // Delete a location (soft-delete via API)
   const deleteLocation = useCallback(async (location: LocationSummary) => {
     if (!window.confirm(`Tem certeza que deseja excluir ${location.name}?`)) return
     try {
@@ -274,7 +250,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Breadcrumb / Filter chips */}
       <nav aria-label="Navegacao do catalogo" className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -336,7 +311,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         )}
       </nav>
 
-      {/* Search / filter bar */}
       <div className="relative">
         <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
           <SearchIcon />
@@ -373,14 +347,12 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         )}
       </div>
 
-      {/* Loading state */}
       {loading && (
         <div className="flex justify-center py-16">
           <Spinner size="lg" />
         </div>
       )}
 
-      {/* Rooms grid */}
       {!loading && view === 'rooms' && (
         filteredRooms.length === 0 ? (
           normalizedSearch ? (
@@ -442,7 +414,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         )
       )}
 
-      {/* Locations grid */}
       {!loading && view === 'locations' && (
         filteredLocations.length === 0 ? (
           normalizedSearch ? (
@@ -514,7 +485,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         )
       )}
 
-      {/* Products grid */}
       {!loading && view === 'products' && (
         filteredProducts.length === 0 ? (
           normalizedSearch ? (
@@ -598,7 +568,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
         )
       )}
 
-      {/* Context-aware FAB */}
       <FAB
         href={
           view === 'rooms'
@@ -618,10 +587,6 @@ export function CatalogBrowser({ initialRooms }: CatalogBrowserProps) {
     </div>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Empty state helper
-// ---------------------------------------------------------------------------
 
 function EmptyState({
   emoji,

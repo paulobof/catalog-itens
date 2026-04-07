@@ -35,13 +35,6 @@ public class ThumbnailService {
         return generateThumbnailUrl(photos.getFirst().getObjectKey());
     }
 
-    /**
-     * Returns a presigned URL for the FULL original image (2048px max).
-     * Next.js Image component will optimize it to the actual display size,
-     * so we get sharp images on retina screens without managing multiple sizes.
-     * The thumbnail file (600px) is kept on disk as a fallback for clients
-     * that don't have an image optimizer.
-     */
     public String generateThumbnailUrl(String objectKey) {
         return storageService.generatePresignedUrl(objectKey);
     }

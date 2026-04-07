@@ -6,10 +6,8 @@ import { cn } from '@/lib/utils/cn'
 
 interface PageHeaderProps {
   title: string
-  /** If provided, renders a Link. Otherwise back button calls router.back(). */
   backHref?: string
   backLabel?: string
-  /** Force using browser history.back() even if backHref is provided (as fallback). */
   useBrowserBack?: boolean
   actions?: React.ReactNode
   className?: string

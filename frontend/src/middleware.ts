@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session'
 
-// Paths que nao exigem autenticacao — igualdade exata ou prefixo conhecido
 const PUBLIC_EXACT = new Set<string>([
   '/login',
   '/api/health',
@@ -29,7 +28,6 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Valida o JWT do cookie (assinatura + expiracao)
   const cookie = request.cookies.get(SESSION_COOKIE_NAME)
   const session = cookie?.value ? await verifySessionToken(cookie.value) : null
 

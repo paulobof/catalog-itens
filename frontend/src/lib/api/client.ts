@@ -1,13 +1,3 @@
-/**
- * Base API client for catalog-itens backend.
- *
- * - Server-side (RSC, Server Actions): uses API_URL and reads the session
- *   cookie to add Authorization: Bearer header so the backend can authenticate.
- * - Client-side: uses relative URL (proxied via Next.js route handler, which
- *   handles the JWT forwarding).
- * - Injects X-Request-Id for correlation logging
- */
-
 import { SESSION_COOKIE_NAME } from '@/lib/auth/session'
 
 export class ApiError extends Error {
@@ -31,10 +21,8 @@ export class ApiError extends Error {
 
 function getBaseUrl(): string {
   if (typeof window === 'undefined') {
-    // Server-side: use internal Docker network URL
     return process.env.API_URL ?? 'http://localhost:8080'
   }
-  // Client-side: use relative URL (proxied through Next.js route handler)
   return ''
 }
 
@@ -44,10 +32,8 @@ function generateRequestId(): string {
 
 async function getAuthHeader(): Promise<string | null> {
   if (typeof window !== 'undefined') {
-    // Browser: o proxy route handler cuida do JWT forwarding
     return null
   }
-  // Server-side: le o cookie e envia como Authorization: Bearer
   try {
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
@@ -59,13 +45,9 @@ async function getAuthHeader(): Promise<string | null> {
 }
 
 interface FetchOptions extends RequestInit {
-  /** Additional query string params appended to the URL */
   params?: Record<string, string | number | boolean | undefined | null>
 }
 
-/**
- * Core fetch wrapper. Throws ApiError on non-2xx responses.
- */
 export async function fetchApi<T>(
   path: string,
   options: FetchOptions = {},
@@ -120,13 +102,11 @@ export async function fetchApi<T>(
       errorPath = errorBody.path
       errorRequestId = errorBody.requestId
     } catch {
-      // response body was not JSON — use default message
     }
 
     throw new ApiError(response.status, errorMessage, errorPath, errorRequestId)
   }
 
-  // 204 No Content
   if (response.status === 204) {
     return undefined as T
   }

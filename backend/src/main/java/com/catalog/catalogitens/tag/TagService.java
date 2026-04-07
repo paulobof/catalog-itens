@@ -51,9 +51,8 @@ public class TagService {
         tagRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag", id));
 
-        // Hard-delete all ProductTag associations before soft-deleting the tag
         productTagRepository.deleteAllByTagId(id);
-        tagRepository.deleteById(id);  // triggers @SQLDelete
+        tagRepository.deleteById(id);
         log.warn("Soft-deleted tag: {}", id);
     }
 }

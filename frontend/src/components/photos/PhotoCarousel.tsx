@@ -25,7 +25,6 @@ export function PhotoCarousel({ photos, productName }: PhotoCarouselProps) {
     setCurrent((c) => (c === total - 1 ? 0 : c + 1))
   }, [total])
 
-  // Keyboard navigation
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'ArrowLeft') prev()
@@ -65,7 +64,6 @@ export function PhotoCarousel({ photos, productName }: PhotoCarouselProps) {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Slides */}
       <div className="relative h-72 bg-barbie-bg-soft">
         {photos.map((photo, index) => (
           <div
@@ -92,7 +90,6 @@ export function PhotoCarousel({ photos, productName }: PhotoCarouselProps) {
         ))}
       </div>
 
-      {/* Prev / Next buttons */}
       {total > 1 && (
         <>
           <button
@@ -142,7 +139,6 @@ export function PhotoCarousel({ photos, productName }: PhotoCarouselProps) {
         </>
       )}
 
-      {/* Dots indicator */}
       {total > 1 && (
         <div
           className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2"

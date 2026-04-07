@@ -36,7 +36,6 @@ export default function LoginPage() {
       }
 
       console.log('[login] success — navigating')
-      // Hard navigation forces middleware to re-run with the new cookie
       window.location.href = '/'
     } catch (err) {
       console.error('[login] error', err)

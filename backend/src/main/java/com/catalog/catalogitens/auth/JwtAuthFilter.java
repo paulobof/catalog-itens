@@ -21,11 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
-/**
- * Filtro que valida JWTs HS256 emitidos pelo frontend.
- * O frontend Next.js assina um JWT com SESSION_SECRET no /api/auth/login
- * e envia no header Authorization: Bearer <token> para cada proxied API call.
- */
 @Slf4j
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -76,7 +71,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             JsonNode header = MAPPER.readTree(headerJson);
             if (!"HS256".equals(header.path("alg").asText())) return null;
 
-            // Verifica assinatura HMAC-SHA256 sobre "header.payload"
             String signingInput = parts[0] + "." + parts[1];
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secretBytes, "HmacSHA256"));
@@ -88,7 +82,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             JsonNode payload = MAPPER.readTree(payloadJson);
 
-            // Verifica expiracao
             long exp = payload.path("exp").asLong(0);
             if (exp > 0 && exp < System.currentTimeMillis() / 1000) {
                 return null;

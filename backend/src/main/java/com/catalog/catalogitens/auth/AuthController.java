@@ -55,7 +55,6 @@ public class AuthController {
     private String clientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            // Pega o primeiro IP (cliente real atras do proxy)
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();

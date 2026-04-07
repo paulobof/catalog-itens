@@ -126,7 +126,6 @@ public class ProductService {
         product.setDescription(request.description());
         product = productRepository.save(product);
 
-        // Add tags
         if (request.tagIds() != null) {
             for (UUID tagId : request.tagIds()) {
                 Tag tag = tagRepository.findById(tagId)
@@ -138,7 +137,6 @@ public class ProductService {
             }
         }
 
-        // Add locations
         if (request.locations() != null) {
             for (CreateProductRequest.ProductLocationEntry entry : request.locations()) {
                 Location location = locationRepository.findById(entry.locationId())
@@ -166,7 +164,6 @@ public class ProductService {
         product.setDescription(request.description());
         productRepository.save(product);
 
-        // Replace tags
         if (request.tagIds() != null) {
             productTagRepository.deleteAllByProductId(id);
             for (UUID tagId : request.tagIds()) {
@@ -188,7 +185,6 @@ public class ProductService {
         productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
 
-        // Cascade: soft-delete ProductLocations, hard-delete ProductTags, soft-delete Photos
         productLocationRepository.softDeleteByProductId(id);
         productTagRepository.deleteAllByProductId(id);
 
@@ -204,7 +200,7 @@ public class ProductService {
         }
         photoRepository.softDeleteAllByEntityTypeAndEntityId("product", id);
 
-        productRepository.deleteById(id);  // triggers @SQLDelete
+        productRepository.deleteById(id);
         log.warn("Soft-deleted product: {}", id);
     }
 
@@ -215,7 +211,6 @@ public class ProductService {
         Location location = locationRepository.findById(request.locationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Location", request.locationId()));
 
-        // Check for existing active association — conflicts with unique partial index
         productLocationRepository.findActiveByProductIdAndLocationId(productId, request.locationId())
                 .ifPresent(existing -> {
                     throw new org.springframework.dao.DataIntegrityViolationException(
@@ -253,7 +248,7 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "ProductLocation for product " + productId + " and location " + locationId));
 
-        productLocationRepository.deleteById(pl.getId());  // triggers @SQLDelete
+        productLocationRepository.deleteById(pl.getId());
         log.warn("Removed product {} from location {}", productId, locationId);
     }
 

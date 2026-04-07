@@ -22,15 +22,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> {}) // usa CorsConfig existente
+                .cors(cors -> {})
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints publicos
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/login")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/health")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/actuator/info")).permitAll()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/error")).permitAll()
-                        // Tudo o resto exige autenticacao
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 
 const COOKIE_NAME = 'catalog-session'
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 7 // 7 days
+const MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 const ALG = 'HS256'
 
 export interface SessionPayload {

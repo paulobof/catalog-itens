@@ -54,7 +54,6 @@ export function ProductForm({
   const [submitting, setSubmitting] = useState(false)
   const isEditing = !!product
 
-  // Photo slots
   const [photoSlots, setPhotoSlots] = useState<PhotoSlot[]>(() => {
     if (product?.photos) {
       const slots = createEmptySlots()
@@ -73,13 +72,11 @@ export function ProductForm({
     return createEmptySlots()
   })
 
-  // Tag selection
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     product?.tags.map((t) => t.id) ?? [],
   )
   const [localTags, setLocalTags] = useState<TagResponse[]>(allTags)
 
-  // Location assignments
   const [locationEntries, setLocationEntries] = useState<LocationEntry[]>(() => {
     if (product?.locations) {
       return product.locations.map((l) => ({
@@ -176,7 +173,6 @@ export function ProductForm({
         productId = created.id
       }
 
-      // Upload new photos sequentially
       for (let i = 0; i < photoSlots.length; i++) {
         const slot = photoSlots[i]
         if (!slot || slot.file === null) continue
@@ -211,7 +207,6 @@ export function ProductForm({
           : 'Produto criado com sucesso!',
         'success',
       )
-      // Hard navigation to avoid intercepting route issues
       window.location.href = `/products/${productId}`
     } catch {
       showToast('Erro ao salvar produto. Tente novamente.', 'error')
@@ -230,7 +225,6 @@ export function ProductForm({
       noValidate
       className="flex flex-col gap-6 pb-10"
     >
-      {/* Basic info */}
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Informações básicas
@@ -254,7 +248,6 @@ export function ProductForm({
         />
       </fieldset>
 
-      {/* Photos */}
       <fieldset>
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Fotos
@@ -262,7 +255,6 @@ export function ProductForm({
         <PhotoUploadZone slots={photoSlots} onChange={setPhotoSlots} onDeleteExisting={(id) => deletePhoto(id).catch(() => {})} />
       </fieldset>
 
-      {/* Tags */}
       <fieldset>
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Tags
@@ -276,7 +268,6 @@ export function ProductForm({
         />
       </fieldset>
 
-      {/* Locations */}
       <fieldset>
         <legend className="mb-2 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Locais de armazenamento

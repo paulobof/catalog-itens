@@ -1,31 +1,12 @@
-# =============================================================================
-# docker-compose.prod.yml — Production hardening override
-#
-# Usage:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
-#
-# What this adds vs the base file:
-#   - Resource limits (memory + CPU) per container
-#   - restart: unless-stopped for all services
-#   - json-file log driver with rotation (max-size 50m, max-file 5)
-#   - read_only root filesystem + tmpfs for writable directories
-#   - cap_drop: ALL (drop all Linux capabilities)
-#   - no-new-privileges: true (prevents privilege escalation)
-#   - PostgreSQL performance tuning command flags
-# =============================================================================
 
 services:
 
-  # ---------------------------------------------------------------------------
-  # frontend — Production hardening
-  # ---------------------------------------------------------------------------
   frontend:
     environment:
       NODE_ENV: production
     deploy:
       resources:
         limits:
-          # 256MB RAM, 0.5 CPU cores — Next.js standalone is lightweight
           memory: 256M
           cpus: "0.50"
         reservations:
@@ -37,8 +18,6 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
-    # Read-only root filesystem hardens the container against runtime tampering.
-    # Next.js standalone server only needs to write to /tmp.
     read_only: true
     tmpfs:
       - /tmp:mode=1777,size=64m
@@ -47,17 +26,12 @@ services:
     cap_drop:
       - ALL
 
-  # ---------------------------------------------------------------------------
-  # backend — Production hardening
-  # ---------------------------------------------------------------------------
   backend:
     environment:
       SPRING_PROFILES_ACTIVE: prod
     deploy:
       resources:
         limits:
-          # 768MB RAM — JVM MaxRAMPercentage=75 gives ~576MB heap
-          # 1 CPU core — Spring Boot is well-suited to single-core deployments
           memory: 768M
           cpus: "1.00"
         reservations:
@@ -69,25 +43,18 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
-    # Spring Boot writes nothing to the filesystem at runtime beyond /tmp.
-    # Temporary files (multipart uploads) are written to the JVM temp dir.
     read_only: true
     tmpfs:
-      # Spring Boot multipart upload staging area
       - /tmp:mode=1777,size=128m
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
 
-  # ---------------------------------------------------------------------------
-  # db — Production hardening
-  # ---------------------------------------------------------------------------
   db:
     deploy:
       resources:
         limits:
-          # 512MB RAM, 0.5 CPU — PostgreSQL with shared_buffers=128MB
           memory: 512M
           cpus: "0.50"
         reservations:
@@ -103,20 +70,14 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # PostgreSQL needs to write to its data directory and a few system paths.
-    # The data volume is mounted read-write; /tmp and /run/postgresql are tmpfs.
     tmpfs:
       - /tmp:mode=1777,size=64m
       - /run/postgresql:mode=0755,size=16m
 
-  # ---------------------------------------------------------------------------
-  # minio — Production hardening
-  # ---------------------------------------------------------------------------
   minio:
     deploy:
       resources:
         limits:
-          # 256MB RAM, 0.5 CPU — MinIO is efficient for single-node deployments
           memory: 256M
           cpus: "0.50"
         reservations:
@@ -132,13 +93,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # MinIO writes data to its mounted volume (/data). It also needs /tmp.
     tmpfs:
       - /tmp:mode=1777,size=64m
 
-  # ---------------------------------------------------------------------------
-  # minio-init — Production hardening
-  # ---------------------------------------------------------------------------
   minio-init:
     logging:
       driver: json-file

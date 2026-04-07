@@ -1,13 +1,3 @@
-/**
- * TypeScript interfaces matching the Spring Boot backend DTOs.
- * All dates are ISO 8601 strings (TIMESTAMPTZ serialized by Jackson).
- * All IDs are UUID v7 strings.
- */
-
-// ---------------------------------------------------------------------------
-// Pagination
-// ---------------------------------------------------------------------------
-
 export interface PageInfo {
   number: number
   size: number
@@ -19,10 +9,6 @@ export interface Page<T> {
   content: T[]
   page: PageInfo
 }
-
-// ---------------------------------------------------------------------------
-// Room
-// ---------------------------------------------------------------------------
 
 export interface RoomSummary {
   id: string
@@ -49,10 +35,6 @@ export interface UpdateRoomRequest {
   name: string
   description?: string | null
 }
-
-// ---------------------------------------------------------------------------
-// Location
-// ---------------------------------------------------------------------------
 
 export interface LocationSummary {
   id: string
@@ -88,10 +70,6 @@ export interface UpdateLocationRequest {
   name: string
   description?: string | null
 }
-
-// ---------------------------------------------------------------------------
-// Product
-// ---------------------------------------------------------------------------
 
 export interface ProductSummary {
   id: string
@@ -147,10 +125,6 @@ export interface ProductSearchParams {
   size?: number
 }
 
-// ---------------------------------------------------------------------------
-// ProductLocation (sub-resource)
-// ---------------------------------------------------------------------------
-
 export interface AddProductLocationRequest {
   locationId: string
   quantity: number
@@ -159,10 +133,6 @@ export interface AddProductLocationRequest {
 export interface UpdateProductLocationRequest {
   quantity: number
 }
-
-// ---------------------------------------------------------------------------
-// Tag
-// ---------------------------------------------------------------------------
 
 export interface TagResponse {
   id: string
@@ -180,10 +150,6 @@ export interface UpdateTagRequest {
   name: string
   color?: string | null
 }
-
-// ---------------------------------------------------------------------------
-// Photo
-// ---------------------------------------------------------------------------
 
 export type EntityType = 'product' | 'location' | 'room'
 

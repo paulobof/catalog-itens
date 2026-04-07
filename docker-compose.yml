@@ -1,25 +1,6 @@
-# =============================================================================
-# docker-compose.yml — Base Compose file
-#
-# Defines all 5 services, 3 networks, and 2 named volumes.
-# This file alone is NOT meant to be used directly in production or
-# development; use the appropriate override:
-#
-#   Development : docker compose -f docker-compose.yml -f docker-compose.dev.yml up
-#   Production  : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#   Backup      : docker compose -f docker-compose.backup.yml up
-#
-# Network topology:
-#   frontend-net  — public-facing: frontend only
-#   app-net       — service bus:   frontend <-> backend <-> minio
-#   db-net        — isolated:      backend <-> db (internal: true, no external routing)
-# =============================================================================
 
 services:
 
-  # ---------------------------------------------------------------------------
-  # frontend — Next.js 15 standalone server
-  # ---------------------------------------------------------------------------
   frontend:
     build:
       context: ./frontend
@@ -43,11 +24,8 @@ services:
       - "traefik.docker.network=dokploy-network"
     environment:
       NODE_ENV: production
-      # Server-side API URL (RSC / Server Actions call backend directly)
       API_URL: http://backend:8080
-      # Client-side API URL (browser JS is proxied through Next.js route handlers)
       NEXT_PUBLIC_API_URL: ""
-      # Segredo compartilhado com o backend para assinar JWTs (min 32 chars)
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required (min 32 chars)}
     networks:
       - frontend-net
@@ -64,52 +42,38 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # ---------------------------------------------------------------------------
-  # backend — Spring Boot 3.4 / Java 21
-  # ---------------------------------------------------------------------------
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     image: catalog-itens/backend:latest
     container_name: catalog-backend
-    # Backend port is NOT mapped to the host in production (only accessible
-    # via app-net). The dev override exposes it for local debugging.
     expose:
       - "8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      # Database connection
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://db:5432/catalog_itens?TimeZone=UTC}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-catalog}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
-      # HikariCP
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE:-2}
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:-10}
       SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: ${SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT:-30000}
       SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: ${SPRING_DATASOURCE_HIKARI_MAX_LIFETIME:-1800000}
-      # MinIO
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-catalogsvc}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
       MINIO_BUCKET: ${MINIO_BUCKET:-catalog-photos}
-      # File upload limits
       SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:-5MB}
       SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:-15MB}
-      # Presigned URL TTL
       APP_STORAGE_MINIO_PRESIGNED_URL_TTL: ${APP_STORAGE_MINIO_PRESIGNED_URL_TTL:-60}
-      # Seed users (vazio = no-op; ignorado se usuario ja existe no banco)
       SEED_USER_1_EMAIL: ${SEED_USER_1_EMAIL:-}
       SEED_USER_1_PASSWORD: ${SEED_USER_1_PASSWORD:-}
       SEED_USER_1_NAME: ${SEED_USER_1_NAME:-}
       SEED_USER_2_EMAIL: ${SEED_USER_2_EMAIL:-}
       SEED_USER_2_PASSWORD: ${SEED_USER_2_PASSWORD:-}
       SEED_USER_2_NAME: ${SEED_USER_2_NAME:-}
-      # Pepper para BCrypt — manter "pepper2" em prod (compativel com senhas no banco)
       APP_AUTH_PEPPER: ${APP_AUTH_PEPPER:-pepper2}
-      # Segredo compartilhado com o frontend para assinar/validar JWTs
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required (min 32 chars)}
-      # JVM container support flags
       JAVA_TOOL_OPTIONS: >-
         -XX:+UseContainerSupport
         -XX:MaxRAMPercentage=75.0
@@ -132,14 +96,9 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # ---------------------------------------------------------------------------
-  # db — PostgreSQL 16
-  # ---------------------------------------------------------------------------
   db:
     image: postgres:16-alpine
     container_name: catalog-db
-    # DB port is NOT mapped to the host in production.
-    # The dev override maps it for direct local access (e.g. DBeaver).
     expose:
       - "5432"
     environment:
@@ -171,11 +130,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # ---------------------------------------------------------------------------
-  # minio — MinIO object storage (S3-compatible)
-  # Console is only enabled in dev (port 9001). In production only the
-  # S3 API port (9000) is reachable, and only from within app-net.
-  # ---------------------------------------------------------------------------
   minio:
     image: minio/minio:RELEASE.2024-11-07T00-52-20Z
     container_name: catalog-minio
@@ -197,20 +151,6 @@ services:
       retries: 3
     restart: unless-stopped
 
-  # ---------------------------------------------------------------------------
-  # minio-init — One-shot service that bootstraps the MinIO bucket and
-  # service account on first startup.
-  #
-  # Actions performed:
-  #   1. Wait for MinIO to be healthy (retry loop)
-  #   2. Configure the mc alias pointing to the MinIO S3 endpoint
-  #   3. Create the catalog-photos bucket if it does not already exist
-  #   4. Set the bucket policy to private (deny anonymous access)
-  #   5. Create a service account for the backend with limited permissions
-  #
-  # This container exits with code 0 on success. Compose dependency
-  # condition: service_completed_successfully ensures the backend waits.
-  # ---------------------------------------------------------------------------
   minio-init:
     image: minio/mc:RELEASE.2024-11-17T19-35-25Z
     container_name: catalog-minio-init
@@ -243,33 +183,22 @@ services:
       "
     restart: "no"
 
-# =============================================================================
-# Named volumes — data is persisted across container restarts
-# =============================================================================
 volumes:
   postgres_data:
     driver: local
   minio_data:
     driver: local
 
-# =============================================================================
-# Networks
-# =============================================================================
 networks:
-  # Public-facing network — only the frontend container joins this.
   frontend-net:
     driver: bridge
 
-  # Internal application bus — frontend, backend, and minio communicate here.
   app-net:
     driver: bridge
 
-  # Isolated database network — only backend and db join this.
-  # internal: true means no container on this network can reach the internet.
   db-net:
     driver: bridge
     internal: true
 
-  # Dokploy's Traefik proxy network — required for domain routing
   dokploy-network:
     external: true

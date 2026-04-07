@@ -37,10 +37,7 @@ app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000}
   auth:
-    # Pepper aplicado antes do BCrypt. Mudar esta variavel invalida TODOS os hashes existentes.
     pepper: ${APP_AUTH_PEPPER:pepper2}
-    # Segredo compartilhado com o frontend para assinar JWTs (min 32 chars).
-    # Se nao setado, o JwtAuthFilter desabilita validacao (apenas para testes).
     session-secret: ${SESSION_SECRET:}
   storage:
     minio:

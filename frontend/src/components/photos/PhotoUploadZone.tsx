@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils/cn'
 
 const MAX_PHOTOS = 3
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 const ACCEPTED_MIME = ['image/jpeg', 'image/png', 'image/webp']
 
 export interface PhotoSlot {
@@ -48,7 +48,6 @@ export function PhotoUploadZone({ slots, onChange, onDeleteExisting, error }: Ph
   const [validationError, setValidationError] = useState<string | null>(null)
   const blobUrlsRef = useRef<string[]>([])
 
-  // Manage blob URLs: create them when slots change, revoke old ones on cleanup
   const previewUrls = slots.map((slot) => {
     if (slot.existingUrl) return slot.existingUrl
     if (slot.file) {

@@ -57,7 +57,6 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
   )
 }
 
-// Global toast state managed outside React tree
 type ToastListener = (toasts: ToastMessage[]) => void
 const listeners: Set<ToastListener> = new Set()
 let toastQueue: ToastMessage[] = []

@@ -63,8 +63,6 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    // Product-Location sub-resource
-
     @PostMapping("/{id}/locations")
     public ResponseEntity<ProductLocationResponse> addLocation(@PathVariable UUID id,
                                                                 @Valid @RequestBody ProductLocationRequest request) {
@@ -84,8 +82,6 @@ public class ProductController {
         productService.removeLocation(id, locationId);
         return ResponseEntity.noContent().build();
     }
-
-    // Photos sub-resource
 
     @PostMapping(value = "/{id}/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable UUID id,

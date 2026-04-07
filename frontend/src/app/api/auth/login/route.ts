@@ -47,7 +47,6 @@ export async function POST(request: Request) {
 
   const user = await backendRes.json()
 
-  // Cria JWT assinado (nao pode ser forjado sem o SESSION_SECRET)
   const token = await createSessionToken({
     id: user.id,
     email: user.email,

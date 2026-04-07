@@ -24,7 +24,6 @@ export async function uploadPhoto(
   return fetchApi<PhotoResponse>(`/api/${path}/${entityId}/photos`, {
     method: 'POST',
     body: form,
-    // Do not set Content-Type — browser sets multipart boundary automatically
   })
 }
 

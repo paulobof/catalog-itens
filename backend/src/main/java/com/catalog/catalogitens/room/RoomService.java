@@ -106,10 +106,8 @@ public class RoomService {
         roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room", id));
 
-        // Cascade soft-delete: ProductLocations → Locations → Room
         productLocationRepository.softDeleteByRoomId(id);
 
-        // Soft-delete photos for each location in this room
         List<Location> locations = locationRepository.findAllByRoomId(id);
         for (Location loc : locations) {
             photoRepository.softDeleteAllByEntityTypeAndEntityId("location", loc.getId());
@@ -117,10 +115,9 @@ public class RoomService {
 
         locationRepository.softDeleteByRoomId(id);
 
-        // Soft-delete photos for the room itself
         photoRepository.softDeleteAllByEntityTypeAndEntityId("room", id);
 
-        roomRepository.deleteById(id);  // triggers @SQLDelete
+        roomRepository.deleteById(id);
         log.warn("Soft-deleted room: {}", id);
     }
 }

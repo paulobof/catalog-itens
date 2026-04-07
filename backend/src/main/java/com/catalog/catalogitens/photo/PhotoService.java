@@ -30,7 +30,6 @@ public class PhotoService {
 
     private static final int MAX_PHOTOS_PER_ENTITY = 3;
     private static final int MAX_DIMENSION = 2048;
-    /** Previne decompression bomb: 50 MP = ~200MB descompactado em memoria. */
     private static final long MAX_PIXELS = 50_000_000L;
     private static final String OUTPUT_FORMAT = "jpeg";
     private static final String CONTENT_TYPE = "image/jpeg";
@@ -40,7 +39,6 @@ public class PhotoService {
             "image/jpeg", "image/png", "image/webp"
     );
 
-    // Magic bytes for JPEG, PNG and WebP
     private static final byte[] JPEG_MAGIC = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
     private static final byte[] PNG_MAGIC  = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47};
     private static final byte[] WEBP_MAGIC_RIFF = "RIFF".getBytes();
@@ -73,10 +71,8 @@ public class PhotoService {
         String objectKey = "photos/" + entityType + "/" + entityId + "/" + photoUuid + "." + EXTENSION;
         String thumbKey  = "thumbs/" + entityType + "/" + entityId + "/" + photoUuid + "." + EXTENSION;
 
-        // Upload original (re-encoded, EXIF stripped)
         storageService.upload(objectKey, new ByteArrayInputStream(imageBytes), CONTENT_TYPE, imageBytes.length);
 
-        // Generate and upload thumbnail asynchronously
         thumbnailService.uploadThumbnailAsync(imageBytes, thumbKey);
 
         int sortOrder = (int) currentCount;
@@ -131,7 +127,7 @@ public class PhotoService {
             log.warn("Failed to delete thumbnail from storage: {}", thumbKey, e);
         }
 
-        photoRepository.deleteById(photoId);  // triggers @SQLDelete
+        photoRepository.deleteById(photoId);
         log.warn("Deleted photo: {}", photoId);
     }
 
@@ -169,18 +165,15 @@ public class PhotoService {
     }
 
     private boolean isValidMagicBytes(byte[] bytes) {
-        // JPEG: FF D8 FF
         if (bytes.length >= 3 &&
                 bytes[0] == JPEG_MAGIC[0] && bytes[1] == JPEG_MAGIC[1] && bytes[2] == JPEG_MAGIC[2]) {
             return true;
         }
-        // PNG: 89 50 4E 47
         if (bytes.length >= 4 &&
                 bytes[0] == PNG_MAGIC[0] && bytes[1] == PNG_MAGIC[1] &&
                 bytes[2] == PNG_MAGIC[2] && bytes[3] == PNG_MAGIC[3]) {
             return true;
         }
-        // WebP: RIFF....WEBP
         if (bytes.length >= 12) {
             byte[] riff = Arrays.copyOfRange(bytes, 0, 4);
             byte[] webp = Arrays.copyOfRange(bytes, 8, 12);
@@ -193,8 +186,6 @@ public class PhotoService {
 
     private byte[] readAndReencode(MultipartFile file) {
         try {
-            // Valida dimensoes em modo lazy ANTES de carregar os pixels na memoria.
-            // Previne decompression bomb: um PNG de 80KB pode descompactar para 30GB.
             validateDimensions(file);
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();

@@ -19,7 +19,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findWithDetailsById(@Param("id") UUID id);
 
-    // Full-text search with optional room and tag filters, pagination
     @Query(value = """
             SELECT p.* FROM product p
             WHERE p.deleted_at IS NULL

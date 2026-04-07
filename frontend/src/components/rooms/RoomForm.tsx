@@ -80,7 +80,6 @@ export function RoomForm({ room, existingPhotos }: RoomFormProps) {
         roomId = created.id
       }
 
-      // Upload new photos sequentially
       for (let i = 0; i < photoSlots.length; i++) {
         const slot = photoSlots[i]
         if (!slot || slot.file === null) continue

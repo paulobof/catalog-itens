@@ -6,7 +6,6 @@ import type { ProductSummary } from '@/lib/api/types'
 
 interface ProductCardProps {
   product: ProductSummary
-  /** Optional badge showing quantity in a specific location */
   quantityBadge?: number
   searchQuery?: string
 }

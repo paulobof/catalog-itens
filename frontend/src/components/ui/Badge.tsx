@@ -3,11 +3,8 @@ import type { HTMLAttributes } from 'react'
 
 type BadgeVariant = 'default' | 'primary' | 'dark' | 'custom'
 
-// Omit 'color' from HTMLAttributes because it types as `string` which conflicts
-// with our `string | null` color prop
 interface BadgeProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'> {
   variant?: BadgeVariant
-  /** Hex color — used when variant is 'custom' */
   color?: string | null
 }
 
@@ -29,7 +26,7 @@ export function Badge({
   const customStyle =
     variant === 'custom' && color
       ? {
-          backgroundColor: `${color}33`, // 20% opacity
+          backgroundColor: `${color}33`,
           color: color,
           borderColor: `${color}66`,
           ...style,

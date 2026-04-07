@@ -9,11 +9,6 @@ interface SheetProps {
   className?: string
 }
 
-/**
- * Bottom sheet / slide-over modal.
- * Slides up from the bottom on mobile. Closes via router.back() so the
- * intercepting route is dismissed and the background page is restored.
- */
 export function Sheet({ children, className }: SheetProps) {
   const router = useRouter()
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -22,7 +17,6 @@ export function Sheet({ children, className }: SheetProps) {
     router.back()
   }
 
-  // Close on Escape key
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') handleClose()
@@ -32,7 +26,6 @@ export function Sheet({ children, className }: SheetProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Prevent body scroll while sheet is open
   useEffect(() => {
     const original = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -47,14 +40,12 @@ export function Sheet({ children, className }: SheetProps) {
       role="dialog"
       aria-modal="true"
     >
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
         aria-hidden="true"
         onClick={handleClose}
       />
 
-      {/* Sheet panel */}
       <div
         ref={sheetRef}
         className={cn(
@@ -63,7 +54,6 @@ export function Sheet({ children, className }: SheetProps) {
           className,
         )}
       >
-        {/* Drag handle */}
         <div
           className="flex justify-center pt-3 pb-1 shrink-0"
           aria-hidden="true"
@@ -71,7 +61,6 @@ export function Sheet({ children, className }: SheetProps) {
           <div className="h-1 w-10 rounded-full bg-barbie-accent/40" />
         </div>
 
-        {/* Close button */}
         <button
           type="button"
           onClick={handleClose}
@@ -94,7 +83,6 @@ export function Sheet({ children, className }: SheetProps) {
           </svg>
         </button>
 
-        {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto overscroll-contain">
           {children}
         </div>

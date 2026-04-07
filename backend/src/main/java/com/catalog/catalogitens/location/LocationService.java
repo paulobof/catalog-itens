@@ -116,13 +116,11 @@ public class LocationService {
         locationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Location", id));
 
-        // Cascade soft-delete ProductLocations before soft-deleting Location
         productLocationRepository.softDeleteByLocationId(id);
 
-        // Soft-delete photos for this location
         photoRepository.softDeleteAllByEntityTypeAndEntityId("location", id);
 
-        locationRepository.deleteById(id);  // triggers @SQLDelete
+        locationRepository.deleteById(id);
         log.warn("Soft-deleted location: {}", id);
     }
 }

@@ -8,20 +8,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Semeia usuários iniciais no banco de dados na primeira inicialização.
- *
- * As credenciais são lidas de variáveis de ambiente — nunca versionadas.
- * Se um usuário já existe no banco, o seeder não altera sua senha.
- *
- * Variáveis esperadas:
- *   SEED_USER_1_EMAIL, SEED_USER_1_PASSWORD, SEED_USER_1_NAME
- *   SEED_USER_2_EMAIL, SEED_USER_2_PASSWORD, SEED_USER_2_NAME
- *
- * Se qualquer variável estiver ausente, o seeder para sem erro — permite
- * ambientes onde os usuários são gerenciados manualmente (ex: produção
- * após trocar senhas via UPDATE direto).
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

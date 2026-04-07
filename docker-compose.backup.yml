@@ -1,36 +1,6 @@
-# =============================================================================
-# docker-compose.backup.yml — Backup services
-#
-# Usage (run manually or via cron):
-#   docker compose -f docker-compose.backup.yml --env-file .env up --abort-on-container-exit
-#
-# What this does:
-#   1. pg-backup: runs pg_dump against the running db container, writes a
-#      timestamped compressed SQL dump to ./backups/postgres/
-#   2. minio-backup: runs mc mirror to sync the catalog-photos bucket to a
-#      local ./backups/minio/ directory.
-#
-# Retention: files older than 7 days are deleted automatically.
-#
-# Prerequisites:
-#   - The base stack (docker-compose.yml) must be running.
-#   - The ./backups directory will be created automatically.
-#   - Both services exit with code 0 on success; inspect logs on failure.
-#
-# Cron example (run daily at 2:00 AM):
-#   0 2 * * * cd /opt/catalog-itens && \
-#     docker compose -f docker-compose.backup.yml --env-file .env \
-#     up --abort-on-container-exit >> /var/log/catalog-backup.log 2>&1
-# =============================================================================
 
 services:
 
-  # ---------------------------------------------------------------------------
-  # pg-backup — PostgreSQL dump via pg_dump
-  # Connects to the running db container over the db-net network.
-  # Output: ./backups/postgres/catalog_itens_YYYY-MM-DD_HH-MM-SS.sql.gz
-  # Retention: deletes .sql.gz files older than 7 days.
-  # ---------------------------------------------------------------------------
   pg-backup:
     image: postgres:16-alpine
     container_name: catalog-pg-backup
@@ -41,10 +11,8 @@ services:
       PGUSER: ${POSTGRES_USER:-catalog}
       PGPASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      # Mount the host backup directory into the container
       - ${BACKUP_DIR:-./backups}/postgres:/backups
     networks:
-      # Must share db-net with the running db service to reach it
       - db-net
     command: >
       /bin/sh -c "
@@ -68,12 +36,6 @@ services:
       "
     restart: "no"
 
-  # ---------------------------------------------------------------------------
-  # minio-backup — MinIO mirror via mc
-  # Mirrors the catalog-photos bucket to a local directory.
-  # Output: ./backups/minio/catalog-photos/ (full mirror)
-  # Retention: deletes files older than 7 days from the mirror directory.
-  # ---------------------------------------------------------------------------
   minio-backup:
     image: minio/mc:RELEASE.2024-11-17T19-35-25Z
     container_name: catalog-minio-backup
@@ -82,10 +44,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: ${MINIO_BUCKET:-catalog-photos}
     volumes:
-      # Mount the host backup directory into the container
       - ${BACKUP_DIR:-./backups}/minio:/backups
     networks:
-      # Must share app-net with the running minio service to reach it
       - app-net
     command: >
       /bin/sh -c "
@@ -105,10 +65,6 @@ services:
       "
     restart: "no"
 
-# =============================================================================
-# Networks — must reference the same networks as the base compose file
-# so backup containers can reach db and minio
-# =============================================================================
 networks:
   db-net:
     external: true

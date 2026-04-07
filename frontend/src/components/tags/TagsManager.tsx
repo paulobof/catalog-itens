@@ -88,7 +88,6 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Create form */}
       <section aria-label="Criar nova tag">
         <h2 className="mb-3 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Nova tag
@@ -150,7 +149,6 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
         </form>
       </section>
 
-      {/* Existing tags */}
       <section aria-label="Tags existentes">
         <h2 className="mb-3 text-sm font-bold text-barbie-text/70 uppercase tracking-wider">
           Tags ({tags.length})

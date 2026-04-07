@@ -14,7 +14,6 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* Hero header */}
       <div className="bg-barbie-gradient px-4 pb-6 pt-8">
         <h1 className="mb-1 text-2xl font-extrabold text-white">
           Catalog Itens
@@ -25,7 +24,6 @@ export default async function HomePage() {
         <HomeSearchBar />
       </div>
 
-      {/* One-page catalog browser */}
       <div className="px-4 py-4">
         <Suspense
           fallback={
