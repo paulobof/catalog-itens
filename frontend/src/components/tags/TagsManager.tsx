@@ -6,6 +6,7 @@ import { createTag, deleteTag } from '@/lib/api/tags'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { EditTagDialog } from './EditTagDialog'
 import { Input } from '@/components/ui/Input'
 import { showToast } from '@/components/ui/Toast'
 import type { TagResponse } from '@/lib/api/types'
@@ -25,6 +26,7 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [pendingTag, setPendingTag] = useState<TagResponse | null>(null)
+  const [editingTag, setEditingTag] = useState<TagResponse | null>(null)
 
   const {
     register,
@@ -69,6 +71,10 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
     } finally {
       setDeletingId(null)
     }
+  }
+
+  function handleTagUpdated(updated: TagResponse) {
+    setTags((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
   }
 
   return (
@@ -152,6 +158,14 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
                 </Badge>
                 <button
                   type="button"
+                  onClick={() => setEditingTag(tag)}
+                  aria-label={`Editar tag ${tag.name}`}
+                  className="flex h-5 w-5 items-center justify-center rounded-full text-xs text-barbie-text/30 hover:bg-barbie-bg-soft hover:text-barbie-primary"
+                >
+                  ✏️
+                </button>
+                <button
+                  type="button"
                   onClick={() => setPendingTag(tag)}
                   disabled={deletingId === tag.id}
                   aria-label={`Remover tag ${tag.name}`}
@@ -180,6 +194,11 @@ export function TagsManager({ initialTags }: TagsManagerProps) {
         destructive
         onConfirm={confirmDeleteTag}
         onCancel={() => setPendingTag(null)}
+      />
+      <EditTagDialog
+        tag={editingTag}
+        onClose={() => setEditingTag(null)}
+        onUpdated={handleTagUpdated}
       />
     </div>
   )
