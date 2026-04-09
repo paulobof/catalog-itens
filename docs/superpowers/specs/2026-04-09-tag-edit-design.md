@@ -160,7 +160,7 @@ Esc / overlay click / Cancelar        →  onClose() without saving
 | Backend 404 (tag deleted in another tab) | Error toast; modal stays open (acceptable — rare) |
 | Network failure | Error toast; modal stays open; user can retry |
 | Submit while loading | `Button` is `disabled` via `loading` prop — no double submission |
-| Esc / overlay click during loading | Allowed — request may complete in background; optimistic refresh on next page load |
+| Esc / overlay click / Cancelar during loading | Blocked — follows the `ConfirmDialog` convention (`onClose={busy ? () => {} : onCancel}`) to prevent the user from dismissing a pending write |
 | Color is empty string | Sent as `null` to the backend (matches `CreateTagRequest` behavior) |
 | Mobile viewport < 400px wide | `max-w-md mx-4` keeps 16px gutters; modal stays readable |
 
