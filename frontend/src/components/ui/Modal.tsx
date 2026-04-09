@@ -3,18 +3,28 @@
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils/cn'
 
+type ModalVariant = 'sheet' | 'centered'
+
 interface ModalProps {
   open: boolean
   onClose: () => void
   title?: string
   children?: React.ReactNode
   className?: string
+  variant?: ModalVariant
 }
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  className,
+  variant = 'sheet',
+}: ModalProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
 
@@ -86,7 +96,12 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end"
+      className={cn(
+        'fixed inset-0 z-50 flex',
+        variant === 'sheet'
+          ? 'flex-col justify-end'
+          : 'items-center justify-center',
+      )}
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -101,16 +116,21 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         ref={containerRef}
         tabIndex={-1}
         className={cn(
-          'relative z-10 flex max-h-[85vh] flex-col rounded-t-3xl bg-white shadow-2xl animate-slide-up focus:outline-none',
+          'relative z-10 flex max-h-[85vh] flex-col bg-white shadow-2xl focus:outline-none',
+          variant === 'sheet'
+            ? 'rounded-t-3xl animate-slide-up'
+            : 'rounded-3xl mx-4 w-full max-w-md animate-scale-in',
           className,
         )}
       >
-        <div
-          className="flex justify-center pt-3 pb-1 shrink-0"
-          aria-hidden="true"
-        >
-          <div className="h-1 w-10 rounded-full bg-barbie-accent/40" />
-        </div>
+        {variant === 'sheet' && (
+          <div
+            className="flex justify-center pt-3 pb-1 shrink-0"
+            aria-hidden="true"
+          >
+            <div className="h-1 w-10 rounded-full bg-barbie-accent/40" />
+          </div>
+        )}
 
         <button
           type="button"
