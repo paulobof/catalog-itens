@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Input } from '@/components/ui/Input'
 import { showToast } from '@/components/ui/Toast'
 import type { TagResponse } from '@/lib/api/types'
+import { DEFAULT_COLORS } from './constants'
 
 interface TagsManagerProps {
   initialTags: TagResponse[]
@@ -18,19 +19,6 @@ interface CreateTagFormData {
   name: string
   color: string
 }
-
-const DEFAULT_COLORS = [
-  '#ec407a',
-  '#f06292',
-  '#e91e63',
-  '#9c27b0',
-  '#3f51b5',
-  '#2196f3',
-  '#009688',
-  '#4caf50',
-  '#ff9800',
-  '#795548',
-]
 
 export function TagsManager({ initialTags }: TagsManagerProps) {
   const [tags, setTags] = useState<TagResponse[]>(initialTags)
