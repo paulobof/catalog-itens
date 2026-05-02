@@ -8,6 +8,8 @@ public interface StorageService {
 
     String generatePresignedUrl(String objectKey);
 
+    StoredObject load(String objectKey);
+
     void delete(String objectKey);
 
     boolean isHealthy();

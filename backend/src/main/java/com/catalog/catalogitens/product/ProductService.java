@@ -7,6 +7,7 @@ import com.catalog.catalogitens.location.LocationRepository;
 import com.catalog.catalogitens.photo.Photo;
 import com.catalog.catalogitens.photo.PhotoEntityType;
 import com.catalog.catalogitens.photo.PhotoRepository;
+import com.catalog.catalogitens.photo.PhotoUrls;
 import com.catalog.catalogitens.photo.StorageService;
 import com.catalog.catalogitens.photo.ThumbnailService;
 import com.catalog.catalogitens.tag.Tag;
@@ -109,8 +110,8 @@ public class ProductService {
         List<ProductDetailResponse.PhotoEntry> photoEntries = photos.stream()
                 .map(ph -> new ProductDetailResponse.PhotoEntry(
                         ph.getId(),
-                        storageService.generatePresignedUrl(ph.getObjectKey()),
-                        thumbnailService.generateThumbnailUrl(ph.getObjectKey()),
+                        PhotoUrls.fileUrl(ph.getId()),
+                        PhotoUrls.thumbnailUrl(ph.getId()),
                         ph.getOriginalFilename(),
                         ph.getFileSize(),
                         ph.getSortOrder()))

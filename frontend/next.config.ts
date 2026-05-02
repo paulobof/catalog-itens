@@ -5,20 +5,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: import.meta.dirname,
 
   images: {
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'minio',
-        port: '9000',
-        pathname: '/catalog-photos/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '9000',
-        pathname: '/catalog-photos/**',
-      },
-    ],
+    remotePatterns: [],
   },
 
   async headers() {
@@ -60,7 +47,7 @@ const nextConfig: NextConfig = {
               // Tailwind / Next inject inline <style> tags, so 'unsafe-inline'
               // is still required for style-src.
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: http://minio:9000 http://localhost:9000",
+              "img-src 'self' data: blob:",
               "font-src 'self'",
               // Browser only talks to same-origin /api routes; the backend
               // proxy runs server-side, so no external connect targets.

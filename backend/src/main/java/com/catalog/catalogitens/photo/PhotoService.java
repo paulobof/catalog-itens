@@ -237,14 +237,8 @@ public class PhotoService {
     }
 
     private PhotoResponse toResponse(Photo photo) {
-        String url = storageService.generatePresignedUrl(photo.getObjectKey());
-        String thumbKey = photo.getObjectKey().replace("photos/", "thumbs/");
-        String thumbnailUrl;
-        try {
-            thumbnailUrl = storageService.generatePresignedUrl(thumbKey);
-        } catch (Exception e) {
-            thumbnailUrl = url;
-        }
+        String url = PhotoUrls.fileUrl(photo.getId());
+        String thumbnailUrl = PhotoUrls.thumbnailUrl(photo.getId());
         return new PhotoResponse(
                 photo.getId(),
                 photo.getEntityType(),

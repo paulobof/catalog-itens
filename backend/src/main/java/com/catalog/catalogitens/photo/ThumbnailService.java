@@ -32,18 +32,11 @@ public class ThumbnailService {
         if (photos.isEmpty()) {
             return null;
         }
-        return generateThumbnailUrl(photos.getFirst().getObjectKey());
+        return PhotoUrls.thumbnailUrl(photos.getFirst().getId());
     }
 
-    public String generateThumbnailUrl(String objectKey) {
-        String thumbKey = objectKey.replace("photos/", "thumbs/");
-        try {
-            return storageService.generatePresignedUrl(thumbKey);
-        } catch (Exception e) {
-            log.warn("Failed to generate thumbnail URL for {}, falling back to original: {}",
-                    thumbKey, e.getMessage());
-            return storageService.generatePresignedUrl(objectKey);
-        }
+    public String generateThumbnailUrl(UUID photoId) {
+        return PhotoUrls.thumbnailUrl(photoId);
     }
 
     public Map<UUID, String> generateFirstThumbnailUrls(String entityType, List<UUID> entityIds) {
@@ -51,7 +44,7 @@ public class ThumbnailService {
         List<Photo> photos = photoRepository.findActiveByEntityTypeAndEntityIds(entityType, entityIds);
         Map<UUID, String> result = new HashMap<>();
         for (Photo photo : photos) {
-            result.computeIfAbsent(photo.getEntityId(), id -> generateThumbnailUrl(photo.getObjectKey()));
+            result.computeIfAbsent(photo.getEntityId(), id -> PhotoUrls.thumbnailUrl(photo.getId()));
         }
         return result;
     }
