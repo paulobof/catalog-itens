@@ -46,6 +46,8 @@ app:
       secret-key: ${MINIO_SECRET_KEY:minioadmin}
       bucket: ${MINIO_BUCKET:catalog-photos}
       presigned-url-ttl: ${APP_STORAGE_MINIO_PRESIGNED_URL_TTL:60}
+  search:
+    similarity-threshold: ${APP_SEARCH_SIMILARITY_THRESHOLD:0.25}
 
 server:
   port: 8080

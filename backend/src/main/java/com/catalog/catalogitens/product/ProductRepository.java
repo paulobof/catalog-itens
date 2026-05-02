@@ -24,8 +24,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             WHERE p.deleted_at IS NULL
               AND (
                 :q IS NULL
-                OR (length(:q) >= 3 AND p.search_vector @@ plainto_tsquery('portuguese', :q))
-                OR (length(:q) < 3  AND p.name ILIKE '%' || :q || '%')
+                OR p.search_vector @@ plainto_tsquery('portuguese', :q)
+                OR p.name ILIKE '%' || :q || '%'
+                OR similarity(p.name, :q) > :simThreshold
               )
               AND (
                 :roomId IS NULL
@@ -46,15 +47,22 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
                       AND pt.tag_id = CAST(:tagId AS uuid)
                 )
               )
-            ORDER BY p.name ASC, p.id ASC
+            ORDER BY
+              GREATEST(
+                COALESCE(ts_rank(p.search_vector, plainto_tsquery('portuguese', :q)), 0)::real,
+                COALESCE(similarity(p.name, :q), 0),
+                CASE WHEN :q IS NOT NULL AND p.name ILIKE '%' || :q || '%' THEN 0.5 ELSE 0 END
+              ) DESC,
+              p.name ASC, p.id ASC
             """,
             countQuery = """
             SELECT COUNT(p.id) FROM product p
             WHERE p.deleted_at IS NULL
               AND (
                 :q IS NULL
-                OR (length(:q) >= 3 AND p.search_vector @@ plainto_tsquery('portuguese', :q))
-                OR (length(:q) < 3  AND p.name ILIKE '%' || :q || '%')
+                OR p.search_vector @@ plainto_tsquery('portuguese', :q)
+                OR p.name ILIKE '%' || :q || '%'
+                OR similarity(p.name, :q) > :simThreshold
               )
               AND (
                 :roomId IS NULL
@@ -80,5 +88,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Page<Product> searchProducts(@Param("q") String q,
                                   @Param("roomId") UUID roomId,
                                   @Param("tagId") UUID tagId,
+                                  @Param("simThreshold") double simThreshold,
                                   Pageable pageable);
 }

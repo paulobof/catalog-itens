@@ -14,6 +14,7 @@ import com.catalog.catalogitens.tag.Tag;
 import com.catalog.catalogitens.tag.TagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +44,9 @@ public class ProductService {
     private final StorageService storageService;
     private final ThumbnailService thumbnailService;
 
+    @Value("${app.search.similarity-threshold:0.25}")
+    private double similarityThreshold;
+
     @Transactional(readOnly = true)
     public PageResponse<ProductSummaryResponse> search(String q, UUID roomId, UUID tagId,
                                                         int page, int size) {
@@ -50,7 +54,8 @@ public class ProductService {
         Pageable pageable = PageRequest.of(page, cappedSize);
         String searchQuery = (q != null && !q.isBlank()) ? q.trim() : null;
 
-        Page<Product> products = productRepository.searchProducts(searchQuery, roomId, tagId, pageable);
+        Page<Product> products = productRepository.searchProducts(
+                searchQuery, roomId, tagId, similarityThreshold, pageable);
 
         List<UUID> productIds = products.getContent().stream().map(Product::getId).toList();
         Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls(
