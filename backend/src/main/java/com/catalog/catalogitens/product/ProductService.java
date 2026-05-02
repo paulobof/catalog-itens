@@ -47,6 +47,9 @@ public class ProductService {
     @Value("${app.search.similarity-threshold:0.25}")
     private double similarityThreshold;
 
+    @Value("${app.search.max-edit-distance:2}")
+    private int maxEditDistance;
+
     @Transactional(readOnly = true)
     public PageResponse<ProductSummaryResponse> search(String q, UUID roomId, UUID tagId,
                                                         int page, int size) {
@@ -55,7 +58,7 @@ public class ProductService {
         String searchQuery = (q != null && !q.isBlank()) ? q.trim() : null;
 
         Page<Product> products = productRepository.searchProducts(
-                searchQuery, roomId, tagId, similarityThreshold, pageable);
+                searchQuery, roomId, tagId, similarityThreshold, maxEditDistance, pageable);
 
         List<UUID> productIds = products.getContent().stream().map(Product::getId).toList();
         Map<UUID, String> thumbnails = thumbnailService.generateFirstThumbnailUrls(

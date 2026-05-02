@@ -27,6 +27,11 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
                 OR p.search_vector @@ plainto_tsquery('portuguese', :q)
                 OR p.name ILIKE '%' || :q || '%'
                 OR similarity(p.name, :q) > :simThreshold
+                OR (
+                  length(:q) >= 3
+                  AND abs(length(p.name) - length(:q)) <= :maxEditDistance
+                  AND levenshtein_less_equal(lower(p.name), lower(:q), :maxEditDistance) <= :maxEditDistance
+                )
               )
               AND (
                 :roomId IS NULL
@@ -51,7 +56,16 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
               GREATEST(
                 COALESCE(ts_rank(p.search_vector, plainto_tsquery('portuguese', :q)), 0)::real,
                 COALESCE(similarity(p.name, :q), 0),
-                CASE WHEN :q IS NOT NULL AND p.name ILIKE '%' || :q || '%' THEN 0.5 ELSE 0 END
+                CASE WHEN :q IS NOT NULL AND p.name ILIKE '%' || :q || '%' THEN 0.5 ELSE 0 END,
+                CASE
+                  WHEN :q IS NULL OR length(:q) < 3
+                       OR abs(length(p.name) - length(:q)) > :maxEditDistance THEN 0
+                  ELSE GREATEST(
+                    0,
+                    1.0 - levenshtein_less_equal(lower(p.name), lower(:q), :maxEditDistance)::real
+                          / GREATEST(length(p.name), length(:q))
+                  )
+                END
               ) DESC,
               p.name ASC, p.id ASC
             """,
@@ -63,6 +77,11 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
                 OR p.search_vector @@ plainto_tsquery('portuguese', :q)
                 OR p.name ILIKE '%' || :q || '%'
                 OR similarity(p.name, :q) > :simThreshold
+                OR (
+                  length(:q) >= 3
+                  AND abs(length(p.name) - length(:q)) <= :maxEditDistance
+                  AND levenshtein_less_equal(lower(p.name), lower(:q), :maxEditDistance) <= :maxEditDistance
+                )
               )
               AND (
                 :roomId IS NULL
@@ -89,5 +108,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
                                   @Param("roomId") UUID roomId,
                                   @Param("tagId") UUID tagId,
                                   @Param("simThreshold") double simThreshold,
+                                  @Param("maxEditDistance") int maxEditDistance,
                                   Pageable pageable);
 }
