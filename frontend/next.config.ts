@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: import.meta.dirname,
 
   images: {
+    unoptimized: true,
     remotePatterns: [],
   },
 

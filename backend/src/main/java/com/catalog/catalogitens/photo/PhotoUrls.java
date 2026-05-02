@@ -4,7 +4,7 @@ import java.util.UUID;
 
 public final class PhotoUrls {
 
-    private static final String BASE = "/api/v1/photos/";
+    private static final String BASE = "/api/photos/";
 
     private PhotoUrls() {}
 
